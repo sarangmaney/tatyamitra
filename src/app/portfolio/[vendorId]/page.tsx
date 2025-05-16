@@ -22,7 +22,7 @@ interface VendorPortfolioData {
   name: string;
   bio: string;
   profileImageUrl: string;
-  dataAiHint?: string; // Added for profile image
+  dataAiHint?: string;
   location: string;
   contactEmail: string;
   equipments: PortfolioEquipment[];
@@ -166,10 +166,14 @@ export default function VendorPortfolioPage() {
   const handleScrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
     if (section) {
-      // Calculate offset for sticky header and nav buttons. Adjust this value as needed.
-      const headerHeight = (document.querySelector('header')?.offsetHeight || 0) + (document.querySelector('#sticky-nav-buttons')?.offsetHeight || 0) + 20; // Added 20px for some breathing room
+      const navButtonsElement = document.getElementById('sticky-nav-buttons');
+      // The nav buttons are sticky at the top. Their height is the offset needed.
+      const navButtonsHeight = navButtonsElement ? navButtonsElement.offsetHeight : 0;
+      const offset = navButtonsHeight + 20; // +20 for breathing room
+
       const elementPosition = section.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+      // We want the top of the section to align just below the sticky nav buttons.
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
 
       window.scrollTo({
         top: offsetPosition,
@@ -178,9 +182,11 @@ export default function VendorPortfolioPage() {
     }
   };
 
+
   return (
     <div className="bg-background min-h-screen">
-      <header className="bg-card shadow-md sticky top-0 z-40">
+      {/* Header is no longer sticky */}
+      <header className="bg-card shadow-md">
         <div className="container mx-auto p-6 md:flex md:items-center md:justify-between">
           <div className="flex items-center space-x-4">
             <Avatar className="h-24 w-24 border-2 border-primary">
@@ -211,8 +217,8 @@ export default function VendorPortfolioPage() {
       </header>
 
       <main className="container mx-auto py-8 px-4 md:px-6">
-        <div id="sticky-nav-buttons" className="flex space-x-2 mb-6 sticky top-[110px] md:top-[90px] bg-background/80 backdrop-blur-sm py-3 z-30 rounded-md shadow-md -mx-2 px-2">
-          {/* Adjusted top value based on header height. Consider header height changes if any. */}
+        {/* Sticky navigation buttons, now at top-0 */}
+        <div id="sticky-nav-buttons" className="flex space-x-2 mb-6 sticky top-0 bg-background/80 backdrop-blur-sm py-3 z-30 rounded-md shadow-md -mx-2 px-2">
           <Button variant="ghost" onClick={() => handleScrollToSection('experience-section')} className="flex-1 justify-center text-accent hover:bg-accent/10 hover:text-accent-foreground">
             <BookOpen className="mr-2 h-5 w-5" /> Our Experience
           </Button>
@@ -221,7 +227,7 @@ export default function VendorPortfolioPage() {
           </Button>
         </div>
         
-        <section id="equipment-section" className="mb-12">
+        <section id="equipment-section" className="mb-12 pt-4"> {/* Added pt-4 to prevent content overlap with sticky nav */}
             <Card className="shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl">Available Equipment & Services</CardTitle>
@@ -250,7 +256,7 @@ export default function VendorPortfolioPage() {
             </Card>
         </section>
 
-        <section id="experience-section" className="mb-12"> {/* Removed pt and -mt as scroll is handled by JS */}
+        <section id="experience-section" className="mb-12 pt-16 -mt-16"> {/* Adjusted pt and -mt for scroll spy */}
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl">Our Journey & Expertise</CardTitle>
@@ -271,7 +277,7 @@ export default function VendorPortfolioPage() {
           </Card>
         </section>
 
-        <section id="reviews-section" className="mb-12">  {/* Removed pt and -mt */}
+        <section id="reviews-section" className="mb-12 pt-16 -mt-16">  {/* Adjusted pt and -mt for scroll spy */}
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl">What Our Customers Say</CardTitle>
@@ -309,3 +315,5 @@ export default function VendorPortfolioPage() {
     </div>
   );
 }
+
+    
