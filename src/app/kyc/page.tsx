@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/icons";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function KYCPage() {
   const router = useRouter();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // In a real app, OTP would be sent and verified.
-    // For now, simulate successful login and redirect to dashboard.
+    // In a real app, KYC documents would be uploaded and verified.
+    // For now, simulate successful KYC and redirect to dashboard.
     router.push("/dashboard");
   };
 
@@ -25,36 +25,33 @@ export default function LoginPage() {
           <div className="flex justify-center items-center mb-4">
             <Logo className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight">Harit Mitra</CardTitle>
-          <CardDescription>Welcome back! Please enter your phone number to login.</CardDescription>
+          <CardTitle className="text-3xl font-bold tracking-tight">KYC Verification</CardTitle>
+          <CardDescription>Please complete your KYC to access all features.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="Enter your phone number" required />
+              <Label htmlFor="documentType">Document Type</Label>
+              <Input id="documentType" type="text" placeholder="e.g., Aadhaar, PAN Card" required />
             </div>
-            {/* In a real app, an OTP input would appear after phone submission */}
-            {/* <div className="space-y-2">
-              <Label htmlFor="otp">OTP</Label>
-              <Input id="otp" type="text" placeholder="Enter OTP" />
-            </div> */}
+            <div className="space-y-2">
+              <Label htmlFor="documentNumber">Document Number</Label>
+              <Input id="documentNumber" type="text" placeholder="Enter document number" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="documentUpload">Upload Document</Label>
+              <Input id="documentUpload" type="file" required />
+              <p className="text-xs text-muted-foreground">Upload a clear image or PDF of your document.</p>
+            </div>
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
-              Send OTP / Login
+              Submit for Verification
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2 text-sm">
+        <CardFooter className="text-center text-sm">
           <p>
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-medium text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
-           <p>
-            Proceed to KYC?{" "}
-            <Link href="/kyc" className="font-medium text-primary hover:underline">
-              KYC Verification
+            <Link href="/dashboard" className="font-medium text-primary hover:underline">
+              Skip for now
             </Link>
           </p>
         </CardFooter>
