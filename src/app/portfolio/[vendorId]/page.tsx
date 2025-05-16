@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { EquipmentCard, type Equipment } from "@/components/dashboard/equipment-card";
 import { ReviewCard, type Review } from "@/components/portfolio/review-card";
-import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, BookOpen, MessageSquare, Tractor, ChevronRight } from "lucide-react"; // Added Tractor
+import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, BookOpen, MessageSquare, Tractor, ChevronRight, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Enhanced Equipment type for portfolio context, including yieldIncreaseBenefit
@@ -25,6 +25,7 @@ interface VendorPortfolioData {
   dataAiHint?: string;
   location: string;
   contactEmail: string;
+  collageImages: Array<{ src: string; alt: string; dataAiHint?: string }>;
   equipments: PortfolioEquipment[];
   experience: {
     summary: string;
@@ -47,6 +48,10 @@ const mockVendorData: VendorPortfolioData = {
   dataAiHint: "vendor profile",
   location: "Satara, Maharashtra",
   contactEmail: "contact@greensproutagri.com",
+  collageImages: [
+    { src: "https://placehold.co/300x200.png", alt: "Farm equipment in action", dataAiHint: "tractor field" },
+    // Add more images for a real collage or for the gallery
+  ],
   equipments: [
     {
       id: "eq1",
@@ -167,9 +172,7 @@ export default function VendorPortfolioPage() {
     const section = document.getElementById(sectionId);
     if (section) {
       const navButtonsElement = document.getElementById('sticky-nav-buttons');
-      // Ensure navButtonsElement exists and has an offsetHeight, default to 0 if not.
       const navButtonsHeight = navButtonsElement ? navButtonsElement.offsetHeight : 0;
-      // Add a small buffer (e.g., 16px or 1rem) to the offset.
       const buffer = 16; 
       const offset = navButtonsHeight + buffer;
 
@@ -184,44 +187,71 @@ export default function VendorPortfolioPage() {
   };
   
   const handleEquipmentBookNow = (equipment: Equipment) => {
-    // This function will be called from the EquipmentCard
-    // Implement booking logic here, e.g., open a booking modal or navigate to a booking page
     toast({
       title: `Book ${equipment.name}`,
       description: "Booking flow would start here.",
     });
   };
 
+  const handleViewMoreGallery = () => {
+    toast({
+      title: "View More Gallery",
+      description: "Photo gallery would open here.",
+    });
+  };
 
   return (
     <div className="bg-background min-h-screen">
-      <header className="bg-card shadow-sm"> {/* Removed sticky from main header */}
-        <div className="container mx-auto p-6 md:flex md:items-center md:justify-between">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-24 w-24 border-2 border-primary">
-              <AvatarImage src={vendorData.profileImageUrl} alt={vendorData.name} data-ai-hint={vendorData.dataAiHint || "vendor profile"} />
-              <AvatarFallback>{getAvatarFallback(vendorData.name)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{vendorData.name}</h1>
-              <p className="text-muted-foreground mt-1">{vendorData.location}</p>
-              <p className="text-sm text-muted-foreground mt-1">{vendorData.contactEmail}</p>
+      <header className="bg-card shadow-sm">
+        <div className="container mx-auto p-6">
+          <div className="md:flex md:items-center md:justify-between">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-24 w-24 border-2 border-primary">
+                <AvatarImage src={vendorData.profileImageUrl} alt={vendorData.name} data-ai-hint={vendorData.dataAiHint || "vendor profile"} />
+                <AvatarFallback>{getAvatarFallback(vendorData.name)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">{vendorData.name}</h1>
+                <p className="text-muted-foreground mt-1">{vendorData.location}</p>
+                <p className="text-sm text-muted-foreground mt-1">{vendorData.contactEmail}</p>
+              </div>
+            </div>
+            <div className="mt-4 md:mt-0 flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => handleShare("copy")}>
+                <Copy className="mr-2 h-4 w-4" /> Copy Link
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleShare("whatsapp")} className="bg-green-500 hover:bg-green-600 text-white">
+                <MessageCircle className="mr-2 h-4 w-4" /> Share on WhatsApp
+              </Button>
+              <Button variant="outline" size="sm" title="Share">
+                <Share2 className="mr-2 h-4 w-4" /> Share
+              </Button>
             </div>
           </div>
-          <div className="mt-4 md:mt-0 flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={() => handleShare("copy")}>
-              <Copy className="mr-2 h-4 w-4" /> Copy Link
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleShare("whatsapp")} className="bg-green-500 hover:bg-green-600 text-white">
-              <MessageCircle className="mr-2 h-4 w-4" /> Share on WhatsApp
-            </Button>
-             <Button variant="outline" size="sm" title="Share">
-              <Share2 className="mr-2 h-4 w-4" /> Share
-            </Button>
+          
+          {/* Single Image and Bio Section */}
+          <div className="mt-6 flex flex-col md:flex-row md:items-start gap-6 md:gap-8">
+            {vendorData.collageImages && vendorData.collageImages.length > 0 && (
+              <div className="w-full md:w-2/5 relative aspect-[4/3] md:aspect-[1/1] rounded-lg overflow-hidden shadow-lg group">
+                <Image
+                  src={vendorData.collageImages[0].src}
+                  alt={vendorData.collageImages[0].alt}
+                  fill={true}
+                  style={{objectFit: "cover"}}
+                  className="transition-transform duration-300 group-hover:scale-105"
+                  data-ai-hint={vendorData.collageImages[0].dataAiHint || "agriculture image"}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 33vw"
+                />
+              </div>
+            )}
+            <div className="w-full md:w-3/5 flex flex-col justify-start">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">About</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {vendorData.bio}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="container mx-auto px-6 py-3">
-           <p className="text-foreground text-center md:text-left">{vendorData.bio}</p>
+
         </div>
       </header>
 
@@ -242,9 +272,9 @@ export default function VendorPortfolioPage() {
             <Card className="shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl">Available Equipment & Services</CardTitle>
-                <CardDescription>Explore our range of high-quality agricultural machinery and services designed to enhance your farming efficiency.</CardDescription>
+                <CardDescription>Explore our range of high-quality agricultural machinery and services.</CardDescription>
               </CardHeader>
-              <CardContent className="relative"> {/* Added relative for positioning the "more" indicator */}
+              <CardContent className="relative p-4 md:p-6 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                 {vendorData.equipments.length > 0 ? (
                   <div className="flex overflow-x-auto space-x-4 pb-4">
                     {vendorData.equipments.map((equipment) => (
@@ -264,7 +294,7 @@ export default function VendorPortfolioPage() {
                 ) : (
                   <p className="text-muted-foreground">No equipment listed currently.</p>
                 )}
-                {vendorData.equipments.length > 2 && ( // Show "more" only if there's likely to be overflow
+                {vendorData.equipments.length > 2 && ( 
                   <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card via-card/70 to-transparent flex items-center justify-end pointer-events-none pr-2">
                     <div className="flex items-center text-sm text-foreground">
                       <span>more</span>
@@ -276,7 +306,7 @@ export default function VendorPortfolioPage() {
             </Card>
         </section>
 
-        <section id="experience-section" className="mb-12 pt-16 -mt-16">
+        <section id="experience-section" className="mb-12 pt-16 -mt-16"> {/* pt-16 and -mt-16 for sticky nav offset */}
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl">Our Journey & Expertise</CardTitle>
@@ -297,13 +327,13 @@ export default function VendorPortfolioPage() {
           </Card>
         </section>
 
-        <section id="reviews-section" className="mb-12 pt-16 -mt-16">
+        <section id="reviews-section" className="mb-12 pt-16 -mt-16"> {/* pt-16 and -mt-16 for sticky nav offset */}
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl">What Our Customers Say</CardTitle>
               <CardDescription>Honest feedback from farmers who have partnered with us.</CardDescription>
             </CardHeader>
-            <CardContent className="relative"> {/* Added relative for positioning the "more" indicator */}
+            <CardContent className="relative p-4 md:p-6 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
               {vendorData.reviews.length > 0 ? (
                  <div className="flex overflow-x-auto space-x-4 pb-4">
                     {vendorData.reviews.map((review) => (
@@ -319,7 +349,7 @@ export default function VendorPortfolioPage() {
               ) : (
                 <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
               )}
-              {vendorData.reviews.length > 2 && ( // Show "more" only if there's likely to be overflow
+              {vendorData.reviews.length > 2 && ( 
                 <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card via-card/70 to-transparent flex items-center justify-end pointer-events-none pr-2">
                    <div className="flex items-center text-sm text-foreground">
                       <span>more</span>
@@ -343,3 +373,5 @@ export default function VendorPortfolioPage() {
     </div>
   );
 }
+
+      
