@@ -124,6 +124,8 @@ const mockVendorData: VendorPortfolioData = {
     { id: "r1", reviewerName: "Sunil Patil", rating: 5, comment: "Excellent equipment and very professional service. The power tiller helped me prepare my land much faster.", date: "2024-07-15", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "farmer portrait" },
     { id: "r2", reviewerName: "Anita Desai", rating: 4, comment: "The seeding drone was a game-changer for my farm. Good support from the team.", date: "2024-06-28", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "woman farmer" },
     { id: "r3", reviewerName: "Rajesh Kumar", rating: 5, comment: "Highly recommend GreenSprout! Their machinery is well-maintained.", date: "2024-05-10", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "indian farmer" },
+    { id: "r4", reviewerName: "Priya Mehta", rating: 5, comment: "Top-notch service and great advice. The team is knowledgeable and helped me pick the right tools for my sugarcane crop.", date: "2024-04-20", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "farmer profile" },
+    { id: "r5", reviewerName: "Vikram Bhosle", rating: 4, comment: "Good range of equipment. The cultivator I rented was in excellent condition and performed well.", date: "2024-03-11", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "male farmer" },
   ],
 };
 
@@ -164,7 +166,15 @@ export default function VendorPortfolioPage() {
   const handleScrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
     if (section) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Calculate offset for sticky header and nav buttons. Adjust this value as needed.
+      const headerHeight = (document.querySelector('header')?.offsetHeight || 0) + (document.querySelector('#sticky-nav-buttons')?.offsetHeight || 0) + 20; // Added 20px for some breathing room
+      const elementPosition = section.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
     }
   };
 
@@ -201,20 +211,20 @@ export default function VendorPortfolioPage() {
       </header>
 
       <main className="container mx-auto py-8 px-4 md:px-6">
-        <div className="flex space-x-2 mb-6 sticky top-[calc(theme(spacing.24)_+_110px)] md:top-[calc(theme(spacing.24)_+_90px)] bg-background/80 backdrop-blur-sm py-3 z-30 rounded-md shadow">
-          {/* Adjusted top value based on header height, assuming header is sticky */}
-          <Button variant="ghost" onClick={() => handleScrollToSection('experience-section')} className="flex-1 justify-center text-accent hover:bg-accent/10">
+        <div id="sticky-nav-buttons" className="flex space-x-2 mb-6 sticky top-[110px] md:top-[90px] bg-background/80 backdrop-blur-sm py-3 z-30 rounded-md shadow-md -mx-2 px-2">
+          {/* Adjusted top value based on header height. Consider header height changes if any. */}
+          <Button variant="ghost" onClick={() => handleScrollToSection('experience-section')} className="flex-1 justify-center text-accent hover:bg-accent/10 hover:text-accent-foreground">
             <BookOpen className="mr-2 h-5 w-5" /> Our Experience
           </Button>
-          <Button variant="ghost" onClick={() => handleScrollToSection('reviews-section')} className="flex-1 justify-center text-accent hover:bg-accent/10">
+          <Button variant="ghost" onClick={() => handleScrollToSection('reviews-section')} className="flex-1 justify-center text-accent hover:bg-accent/10 hover:text-accent-foreground">
             <MessageSquare className="mr-2 h-5 w-5" /> Customer Reviews
           </Button>
         </div>
         
         <section id="equipment-section" className="mb-12">
-            <Card>
+            <Card className="shadow-xl">
               <CardHeader>
-                <CardTitle>Available Equipment & Services</CardTitle>
+                <CardTitle className="text-2xl">Available Equipment & Services</CardTitle>
                 <CardDescription>Explore our range of high-quality agricultural machinery and services designed to enhance your farming efficiency.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -240,10 +250,10 @@ export default function VendorPortfolioPage() {
             </Card>
         </section>
 
-        <section id="experience-section" className="pt-16 -mt-16 mb-12"> {/* pt and -mt for scroll offset due to sticky nav */}
-          <Card>
+        <section id="experience-section" className="mb-12"> {/* Removed pt and -mt as scroll is handled by JS */}
+          <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Our Journey & Expertise</CardTitle>
+              <CardTitle className="text-2xl">Our Journey & Expertise</CardTitle>
                <CardDescription>Learn more about our commitment to agricultural excellence.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -261,21 +271,25 @@ export default function VendorPortfolioPage() {
           </Card>
         </section>
 
-        <section id="reviews-section" className="pt-16 -mt-16">  {/* pt and -mt for scroll offset due to sticky nav */}
-          <Card>
+        <section id="reviews-section" className="mb-12">  {/* Removed pt and -mt */}
+          <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>What Our Customers Say</CardTitle>
+              <CardTitle className="text-2xl">What Our Customers Say</CardTitle>
               <CardDescription>Honest feedback from farmers who have partnered with us.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               {vendorData.reviews.length > 0 ? (
-                vendorData.reviews.map((review) => (
-                  <ReviewCard key={review.id} review={{
-                    ...review,
-                    reviewerImageUrl: review.reviewerImageUrl || `https://placehold.co/50x50.png`,
-                    dataAiHint: review.dataAiHint || "person photo"
-                  }} />
-                ))
+                 <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1">
+                    {vendorData.reviews.map((review) => (
+                      <div key={review.id} className="flex-shrink-0 w-[300px] md:w-[330px] lg:w-[380px] min-h-[200px]">
+                        <ReviewCard review={{
+                          ...review,
+                          reviewerImageUrl: review.reviewerImageUrl || `https://placehold.co/50x50.png`,
+                          dataAiHint: review.dataAiHint || "person photo"
+                        }} />
+                      </div>
+                    ))}
+                  </div>
               ) : (
                 <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
               )}
