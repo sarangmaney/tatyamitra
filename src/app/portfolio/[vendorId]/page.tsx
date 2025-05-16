@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EquipmentCard, type Equipment } from "@/components/dashboard/equipment-card"; // Updated path
 import { ReviewCard, type Review } from "@/components/portfolio/review-card";
-import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award } from "lucide-react";
+import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, Tractor } from "lucide-react"; // Added Tractor
 import { useToast } from "@/hooks/use-toast";
 
 // Enhanced Equipment type for portfolio context, including yieldIncreaseBenefit
@@ -55,6 +55,7 @@ const mockVendorData: VendorPortfolioData = {
       specifications: "15 HP, Diesel Engine, Multi-speed gearbox, adjustable depth control. Comes with rotavator and plough attachments.",
       status: "available",
       imageUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "tiller agriculture",
       price: "₹800/hour",
       rating: 4.7,
       reviewCount: 25,
@@ -70,6 +71,7 @@ const mockVendorData: VendorPortfolioData = {
       specifications: "5kg seed capacity, AI-powered targeted seeding, covers 10 acres/hour. Reduces seed wastage.",
       status: "available",
       imageUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "drone seeding",
       price: "₹1500/acre",
       rating: 4.9,
       reviewCount: 18,
@@ -85,6 +87,7 @@ const mockVendorData: VendorPortfolioData = {
       specifications: "Covers 1 acre per unit, programmable schedule, water-efficient nozzles.",
       status: "maintenance",
       imageUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "irrigation sprinkler",
       price: "₹500/day/unit",
       rating: 4.5,
       reviewCount: 10,
@@ -194,14 +197,13 @@ export default function VendorPortfolioPage() {
                     {vendorData.equipments.map((equipment) => (
                       <EquipmentCard
                         key={equipment.id}
-                        equipment={equipment}
+                        equipment={{
+                          ...equipment,
+                          // Ensure dataAiHint is present, fallback to generic if necessary
+                          dataAiHint: equipment.dataAiHint || (equipment.type.toLowerCase().includes("drone") ? "drone agriculture" : "farm equipment")
+                        }}
                         onEdit={() => {}} // Not editable on public portfolio
                         onDelete={() => {}} // Not deletable
-                        // Add data-ai-hint to images within EquipmentCard if not already present
-                        // For example, pass it as a prop or ensure EquipmentCard handles it.
-                        // This example assumes EquipmentCard's image has a generic hint.
-                        // If specific hints are needed:
-                        // equipment={{...equipment, dataAiHint: equipment.type.toLowerCase().includes("drone") ? "drone agriculture" : "farm equipment"}}
                       />
                     ))}
                   </div>
@@ -264,5 +266,3 @@ export default function VendorPortfolioPage() {
     </div>
   );
 }
-
-    
