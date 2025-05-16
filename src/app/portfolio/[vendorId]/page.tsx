@@ -121,11 +121,11 @@ const mockVendorData: VendorPortfolioData = {
     ],
   },
   reviews: [
-    { id: "r1", reviewerName: "Sunil Patil", rating: 5, comment: "Excellent equipment and very professional service. The power tiller helped me prepare my land much faster.", date: "2024-07-15", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "farmer portrait" },
-    { id: "r2", reviewerName: "Anita Desai", rating: 4, comment: "The seeding drone was a game-changer for my farm. Good support from the team.", date: "2024-06-28", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "woman farmer" },
-    { id: "r3", reviewerName: "Rajesh Kumar", rating: 5, comment: "Highly recommend GreenSprout! Their machinery is well-maintained.", date: "2024-05-10", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "indian farmer" },
-    { id: "r4", reviewerName: "Priya Mehta", rating: 5, comment: "Top-notch service and great advice. The team is knowledgeable and helped me pick the right tools for my sugarcane crop.", date: "2024-04-20", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "farmer profile" },
-    { id: "r5", reviewerName: "Vikram Bhosle", rating: 4, comment: "Good range of equipment. The cultivator I rented was in excellent condition and performed well.", date: "2024-03-11", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "male farmer" },
+    { id: "r1", reviewerName: "Sunil Patil", rating: 5, comment: "Excellent equipment and very professional service. The power tiller helped me prepare my land much faster.", date: "2024-07-15", reviewerImageUrl: "https://placehold.co/50x50.png?text=SP", dataAiHint: "farmer portrait" },
+    { id: "r2", reviewerName: "Anita Desai", rating: 4, comment: "The seeding drone was a game-changer for my farm. Good support from the team.", date: "2024-06-28", reviewerImageUrl: "https://placehold.co/50x50.png?text=AD", dataAiHint: "woman farmer" },
+    { id: "r3", reviewerName: "Rajesh Kumar", rating: 5, comment: "Highly recommend GreenSprout! Their machinery is well-maintained.", date: "2024-05-10", reviewerImageUrl: "https://placehold.co/50x50.png?text=RK", dataAiHint: "indian farmer" },
+    { id: "r4", reviewerName: "Priya Mehta", rating: 5, comment: "Top-notch service and great advice. The team is knowledgeable and helped me pick the right tools for my sugarcane crop.", date: "2024-04-20", reviewerImageUrl: "https://placehold.co/50x50.png?text=PM", dataAiHint: "farmer profile" },
+    { id: "r5", reviewerName: "Vikram Bhosle", rating: 4, comment: "Good range of equipment. The cultivator I rented was in excellent condition and performed well.", date: "2024-03-11", reviewerImageUrl: "https://placehold.co/50x50.png?text=VB", dataAiHint: "male farmer" },
   ],
 };
 
@@ -167,12 +167,10 @@ export default function VendorPortfolioPage() {
     const section = document.getElementById(sectionId);
     if (section) {
       const navButtonsElement = document.getElementById('sticky-nav-buttons');
-      // The nav buttons are sticky at the top. Their height is the offset needed.
       const navButtonsHeight = navButtonsElement ? navButtonsElement.offsetHeight : 0;
-      const offset = navButtonsHeight + 20; // +20 for breathing room
+      const offset = navButtonsHeight + 20; 
 
       const elementPosition = section.getBoundingClientRect().top;
-      // We want the top of the section to align just below the sticky nav buttons.
       const offsetPosition = elementPosition + window.pageYOffset - offset;
 
       window.scrollTo({
@@ -185,7 +183,6 @@ export default function VendorPortfolioPage() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* Header is no longer sticky */}
       <header className="bg-card shadow-md">
         <div className="container mx-auto p-6 md:flex md:items-center md:justify-between">
           <div className="flex items-center space-x-4">
@@ -217,7 +214,6 @@ export default function VendorPortfolioPage() {
       </header>
 
       <main className="container mx-auto py-8 px-4 md:px-6">
-        {/* Sticky navigation buttons, now at top-0 */}
         <div id="sticky-nav-buttons" className="flex space-x-2 mb-6 sticky top-0 bg-background/80 backdrop-blur-sm py-3 z-30 rounded-md shadow-md -mx-2 px-2">
           <Button variant="ghost" onClick={() => handleScrollToSection('experience-section')} className="flex-1 justify-center text-accent hover:bg-accent/10 hover:text-accent-foreground">
             <BookOpen className="mr-2 h-5 w-5" /> Our Experience
@@ -227,15 +223,15 @@ export default function VendorPortfolioPage() {
           </Button>
         </div>
         
-        <section id="equipment-section" className="mb-12 pt-4"> {/* Added pt-4 to prevent content overlap with sticky nav */}
+        <section id="equipment-section" className="mb-12 pt-4">
             <Card className="shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl">Available Equipment & Services</CardTitle>
                 <CardDescription>Explore our range of high-quality agricultural machinery and services designed to enhance your farming efficiency.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent> {/* Using default CardContent padding */}
                 {vendorData.equipments.length > 0 ? (
-                  <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1">
+                  <div className="flex overflow-x-auto space-x-4 pb-4"> {/* Removed -mx-1 px-1 */}
                     {vendorData.equipments.map((equipment) => (
                        <div key={equipment.id} className="flex-shrink-0 w-[300px] md:w-[330px] lg:w-[350px]">
                         <EquipmentCard
@@ -256,7 +252,7 @@ export default function VendorPortfolioPage() {
             </Card>
         </section>
 
-        <section id="experience-section" className="mb-12 pt-16 -mt-16"> {/* Adjusted pt and -mt for scroll spy */}
+        <section id="experience-section" className="mb-12 pt-16 -mt-16">
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl">Our Journey & Expertise</CardTitle>
@@ -277,15 +273,15 @@ export default function VendorPortfolioPage() {
           </Card>
         </section>
 
-        <section id="reviews-section" className="mb-12 pt-16 -mt-16">  {/* Adjusted pt and -mt for scroll spy */}
+        <section id="reviews-section" className="mb-12 pt-16 -mt-16">
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl">What Our Customers Say</CardTitle>
               <CardDescription>Honest feedback from farmers who have partnered with us.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent> {/* Using default CardContent padding */}
               {vendorData.reviews.length > 0 ? (
-                 <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1">
+                 <div className="flex overflow-x-auto space-x-4 pb-4"> {/* Removed -mx-1 px-1 */}
                     {vendorData.reviews.map((review) => (
                       <div key={review.id} className="flex-shrink-0 w-[300px] md:w-[330px] lg:w-[380px] min-h-[200px]">
                         <ReviewCard review={{
