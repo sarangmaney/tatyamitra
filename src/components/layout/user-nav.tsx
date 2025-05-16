@@ -18,6 +18,11 @@ import { useRouter } from "next/navigation";
 
 export function UserNav() {
   const router = useRouter();
+  // In a real app, these details would come from authentication/user state,
+  // potentially populated from your Firestore `vendor_12345xyz` document.
+  const vendorFullName = "GreenAcres Vendor";
+  const vendorEmail = "vendor@greenacres.com";
+  const avatarFallback = vendorFullName?.substring(0,2).toUpperCase() || "GV";
 
   const handleLogout = () => {
     // Simulate logout
@@ -29,17 +34,17 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary">
-            <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
-            <AvatarFallback>TU</AvatarFallback>
+            <AvatarImage src="https://placehold.co/100x100.png" alt="Vendor Avatar" data-ai-hint="vendor logo" />
+            <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Tatya User</p>
+            <p className="text-sm font-medium leading-none">{vendorFullName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              user@example.com
+              {vendorEmail}
             </p>
           </div>
         </DropdownMenuLabel>

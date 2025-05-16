@@ -47,10 +47,10 @@ export default function SettingsPage() {
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      fullName: "Tatya User",
-      email: "user@example.com",
-      phone: "9876543210",
-      bio: "Experienced equipment operator providing reliable services.",
+      fullName: "GreenAcres Vendor",
+      email: "vendor@greenacres.com",
+      phone: "1234567890",
+      bio: "Your trusted partner for quality agricultural equipment and services.",
       avatarUrl: "https://placehold.co/100x100.png",
     },
   });
@@ -67,6 +67,7 @@ export default function SettingsPage() {
 
   const onProfileSubmit = (data: ProfileFormValues) => {
     console.log("Profile data submitted:", data);
+    // In a real app, you would update Firestore here with data from `vendor_12345xyz`
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
   };
 
@@ -85,16 +86,16 @@ export default function SettingsPage() {
       {/* Profile Settings Card */}
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>Update your personal details and profile picture.</CardDescription>
+          <CardTitle>Vendor Profile Information</CardTitle>
+          <CardDescription>Update your vendor details and profile picture.</CardDescription>
         </CardHeader>
         <Form {...profileForm}>
           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={profileForm.watch("avatarUrl") || "https://placehold.co/100x100.png"} alt="User Avatar" data-ai-hint="user avatar" />
-                  <AvatarFallback>{profileForm.watch("fullName")?.substring(0,2).toUpperCase() || "TU"}</AvatarFallback>
+                  <AvatarImage src={profileForm.watch("avatarUrl") || "https://placehold.co/100x100.png"} alt="Vendor Avatar" data-ai-hint="vendor logo" />
+                  <AvatarFallback>{profileForm.watch("fullName")?.substring(0,2).toUpperCase() || "GV"}</AvatarFallback>
                 </Avatar>
                 <FormField
                   control={profileForm.control}
@@ -117,7 +118,7 @@ export default function SettingsPage() {
                   name="fullName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Full Name / Company Name</FormLabel>
                       <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -151,8 +152,8 @@ export default function SettingsPage() {
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Short Bio</FormLabel>
-                    <FormControl><Textarea placeholder="Tell us a little about yourself or your services." className="resize-none" {...field} /></FormControl>
+                    <FormLabel>Short Bio / Description</FormLabel>
+                    <FormControl><Textarea placeholder="Tell us a little about your vendor services." className="resize-none" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
