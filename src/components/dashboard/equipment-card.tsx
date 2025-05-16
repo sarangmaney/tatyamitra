@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit3, Trash2, Eye, Star, Phone, TrendingUp, Video } from "lucide-react"; 
+import { Edit3, Trash2, Eye, Star, Phone, TrendingUp, Video, Rocket } from "lucide-react"; 
 import Link from "next/link";
 
 export interface Equipment {
@@ -28,9 +28,10 @@ interface EquipmentCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onViewDetails?: (id: string) => void;
+  onBookNow?: (equipment: Equipment) => void; // Callback for Book Now
 }
 
-export function EquipmentCard({ equipment, onEdit, onDelete, onViewDetails }: EquipmentCardProps) {
+export function EquipmentCard({ equipment, onEdit, onDelete, onViewDetails, onBookNow }: EquipmentCardProps) {
   const statusBadgeVariant = {
     available: "default",
     unavailable: "destructive",
@@ -47,8 +48,18 @@ export function EquipmentCard({ equipment, onEdit, onDelete, onViewDetails }: Eq
     ? `https://wa.me/${equipment.vendorPhoneNumber.replace(/\D/g, '')}` 
     : undefined;
 
+  const handleBookNowClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click or other parent handlers
+    if (onBookNow) {
+      onBookNow(equipment);
+    } else {
+      // Default action if no handler provided, e.g., for portfolio page
+      alert(`Booking functionality for ${equipment.name} coming soon!`);
+    }
+  };
+
   return (
-    <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full">
       <CardHeader className="p-0 relative">
         <Image
           src={equipment.imageUrl || "https://placehold.co/600x400.png"}
@@ -106,25 +117,33 @@ export function EquipmentCard({ equipment, onEdit, onDelete, onViewDetails }: Eq
         )}
         
       </CardContent>
-      <CardFooter className="p-4 border-t flex flex-col items-start space-y-3">
-        {equipment.price && <p className="text-lg font-semibold text-primary w-full">{equipment.price}</p>}
+      <CardFooter className="p-4 border-t flex flex-col items-start space-y-3 mt-auto">
         <div className="flex justify-between items-center w-full">
-          <div>
-            {whatsappLink && (
-              <Button variant="ghost" size="icon" asChild title="Contact on WhatsApp">
-                <Link href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Phone className="h-5 w-5 text-green-500" /> 
-                </Link>
-              </Button>
-            )}
-          </div>
+          {equipment.price && <p className="text-lg font-semibold text-primary">{equipment.price}</p>}
+          {whatsappLink && (
+            <Button variant="ghost" size="icon" asChild title="Contact on WhatsApp">
+              <Link href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <Phone className="h-5 w-5 text-green-500" /> 
+              </Link>
+            </Button>
+          )}
+        </div>
+        
+        <div className="flex justify-between items-center w-full gap-2">
+          <Button 
+            onClick={handleBookNowClick} 
+            className="flex-grow bg-accent hover:bg-accent/90"
+            disabled={equipment.status !== 'available'}
+            title={equipment.status !== 'available' ? 'Currently unavailable' : 'Book Now'}
+          >
+            <Rocket className="mr-2 h-4 w-4" /> Book Now
+          </Button>
           <div className="flex space-x-1">
             {onViewDetails && (
               <Button variant="ghost" size="icon" onClick={() => onViewDetails(equipment.id)} title="View Details">
                 <Eye className="h-5 w-5" />
               </Button>
             )}
-            {/* Conditionally render Edit/Delete if onEdit/onDelete are provided, useful for portfolio view */}
             {typeof onEdit === 'function' && typeof onDelete === 'function' && (
               <>
                 <Button variant="outline" size="icon" onClick={() => onEdit(equipment.id)} title="Edit">
@@ -141,5 +160,3 @@ export function EquipmentCard({ equipment, onEdit, onDelete, onViewDetails }: Eq
     </Card>
   );
 }
-
-    

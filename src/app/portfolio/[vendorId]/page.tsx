@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { EquipmentCard, type Equipment } from "@/components/dashboard/equipment-card";
 import { ReviewCard, type Review } from "@/components/portfolio/review-card";
-import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, Tractor, BookOpen, MessageSquare } from "lucide-react";
+import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, BookOpen, MessageSquare, Tractor, ChevronRight } from "lucide-react"; // Added Tractor
 import { useToast } from "@/hooks/use-toast";
 
 // Enhanced Equipment type for portfolio context, including yieldIncreaseBenefit
@@ -101,7 +101,7 @@ const mockVendorData: VendorPortfolioData = {
       type: "Implement",
       category: "Tillage Equipment",
       specifications: "9-tyne, suitable for 50-60 HP tractors, for deep soil preparation.",
-      status: "available",
+      status: "unavailable",
       imageUrl: "https://placehold.co/600x400.png",
       dataAiHint: "cultivator farm",
       price: "₹400/hour",
@@ -167,8 +167,11 @@ export default function VendorPortfolioPage() {
     const section = document.getElementById(sectionId);
     if (section) {
       const navButtonsElement = document.getElementById('sticky-nav-buttons');
+      // Ensure navButtonsElement exists and has an offsetHeight, default to 0 if not.
       const navButtonsHeight = navButtonsElement ? navButtonsElement.offsetHeight : 0;
-      const offset = navButtonsHeight + 20; 
+      // Add a small buffer (e.g., 16px or 1rem) to the offset.
+      const buffer = 16; 
+      const offset = navButtonsHeight + buffer;
 
       const elementPosition = section.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
@@ -179,11 +182,20 @@ export default function VendorPortfolioPage() {
       });
     }
   };
+  
+  const handleEquipmentBookNow = (equipment: Equipment) => {
+    // This function will be called from the EquipmentCard
+    // Implement booking logic here, e.g., open a booking modal or navigate to a booking page
+    toast({
+      title: `Book ${equipment.name}`,
+      description: "Booking flow would start here.",
+    });
+  };
 
 
   return (
     <div className="bg-background min-h-screen">
-      <header className="bg-card shadow-md">
+      <header className="bg-card shadow-sm"> {/* Removed sticky from main header */}
         <div className="container mx-auto p-6 md:flex md:items-center md:justify-between">
           <div className="flex items-center space-x-4">
             <Avatar className="h-24 w-24 border-2 border-primary">
@@ -213,8 +225,8 @@ export default function VendorPortfolioPage() {
         </div>
       </header>
 
-      <main className="container mx-auto py-8 px-4 md:px-6">
-        <div id="sticky-nav-buttons" className="flex space-x-2 mb-6 sticky top-0 bg-background/80 backdrop-blur-sm py-3 z-30 rounded-md shadow-md -mx-2 px-2">
+      <div id="sticky-nav-buttons" className="sticky top-0 bg-background/90 backdrop-blur-sm z-30 shadow-md">
+        <div className="container mx-auto flex space-x-1 p-2">
           <Button variant="ghost" onClick={() => handleScrollToSection('experience-section')} className="flex-1 justify-center text-accent hover:bg-accent/10 hover:text-accent-foreground">
             <BookOpen className="mr-2 h-5 w-5" /> Our Experience
           </Button>
@@ -222,6 +234,9 @@ export default function VendorPortfolioPage() {
             <MessageSquare className="mr-2 h-5 w-5" /> Customer Reviews
           </Button>
         </div>
+      </div>
+
+      <main className="container mx-auto py-8 px-4 md:px-6">
         
         <section id="equipment-section" className="mb-12 pt-4">
             <Card className="shadow-xl">
@@ -229,9 +244,9 @@ export default function VendorPortfolioPage() {
                 <CardTitle className="text-2xl">Available Equipment & Services</CardTitle>
                 <CardDescription>Explore our range of high-quality agricultural machinery and services designed to enhance your farming efficiency.</CardDescription>
               </CardHeader>
-              <CardContent> {/* Using default CardContent padding */}
+              <CardContent className="relative"> {/* Added relative for positioning the "more" indicator */}
                 {vendorData.equipments.length > 0 ? (
-                  <div className="flex overflow-x-auto space-x-4 pb-4"> {/* Removed -mx-1 px-1 */}
+                  <div className="flex overflow-x-auto space-x-4 pb-4">
                     {vendorData.equipments.map((equipment) => (
                        <div key={equipment.id} className="flex-shrink-0 w-[300px] md:w-[330px] lg:w-[350px]">
                         <EquipmentCard
@@ -240,13 +255,22 @@ export default function VendorPortfolioPage() {
                             dataAiHint: equipment.dataAiHint || (equipment.type.toLowerCase().includes("drone") ? "drone agriculture" : "farm equipment")
                           }}
                           onEdit={() => { /* Portfolio is view-only */ }} 
-                          onDelete={() => { /* Portfolio is view-only */ }} 
+                          onDelete={() => { /* Portfolio is view-only */ }}
+                          onBookNow={handleEquipmentBookNow} 
                         />
                       </div>
                     ))}
                   </div>
                 ) : (
                   <p className="text-muted-foreground">No equipment listed currently.</p>
+                )}
+                {vendorData.equipments.length > 2 && ( // Show "more" only if there's likely to be overflow
+                  <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card via-card/70 to-transparent flex items-center justify-end pointer-events-none pr-2">
+                    <div className="flex items-center text-sm text-foreground">
+                      <span>more</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -279,9 +303,9 @@ export default function VendorPortfolioPage() {
               <CardTitle className="text-2xl">What Our Customers Say</CardTitle>
               <CardDescription>Honest feedback from farmers who have partnered with us.</CardDescription>
             </CardHeader>
-            <CardContent> {/* Using default CardContent padding */}
+            <CardContent className="relative"> {/* Added relative for positioning the "more" indicator */}
               {vendorData.reviews.length > 0 ? (
-                 <div className="flex overflow-x-auto space-x-4 pb-4"> {/* Removed -mx-1 px-1 */}
+                 <div className="flex overflow-x-auto space-x-4 pb-4">
                     {vendorData.reviews.map((review) => (
                       <div key={review.id} className="flex-shrink-0 w-[300px] md:w-[330px] lg:w-[380px] min-h-[200px]">
                         <ReviewCard review={{
@@ -294,6 +318,14 @@ export default function VendorPortfolioPage() {
                   </div>
               ) : (
                 <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+              )}
+              {vendorData.reviews.length > 2 && ( // Show "more" only if there's likely to be overflow
+                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card via-card/70 to-transparent flex items-center justify-end pointer-events-none pr-2">
+                   <div className="flex items-center text-sm text-foreground">
+                      <span>more</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -311,5 +343,3 @@ export default function VendorPortfolioPage() {
     </div>
   );
 }
-
-    
