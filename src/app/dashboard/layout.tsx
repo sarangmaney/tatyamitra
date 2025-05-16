@@ -29,6 +29,7 @@ import {
   SettingsIcon,
   LogOut,
   Menu,
+  UserSquare, // Added UserSquare icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/dashboard/availability", label: "Availability", icon: CalendarDays },
   { href: "/dashboard/bookings", label: "Bookings", icon: ClipboardList },
   { href: "/dashboard/pricing-tool", label: "Pricing Tool", icon: Wand2 },
+  { href: "/portfolio/vendor_12345xyz", label: "Portfolio", icon: UserSquare }, // Added Portfolio link
   { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -67,7 +69,7 @@ function DashboardSidebar() {
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
-                  isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
+                  isActive={pathname === item.href || (item.href !== "/dashboard" && item.href !== "/portfolio/vendor_12345xyz" && pathname.startsWith(item.href)) || (item.href === "/portfolio/vendor_12345xyz" && pathname.startsWith("/portfolio"))}
                   tooltip={{ children: item.label, side: "right", align: "center"}}
                   onClick={() => isMobile && setOpen(false)}
                   className="justify-start"
