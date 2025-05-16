@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -27,7 +28,7 @@ export default function SignupPage() {
             <Logo className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="text-3xl font-bold tracking-tight">Create Account</CardTitle>
-          <CardDescription>Join Harit Mitra. Tell us about yourself.</CardDescription>
+          <CardDescription>Join Tatya Mitra. Tell us about yourself.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">

@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import {Geist} from 'next/font/google'; // Geist_Mono removed as only Geist Sans is explicitly requested
 import './globals.css';
@@ -9,7 +10,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: 'Harit Mitra',
+  title: 'Tatya Mitra',
   description: 'Empowering agricultural communities through shared resources.',
 };
 

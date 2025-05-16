@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,7 +47,7 @@ export default function SettingsPage() {
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      fullName: "Harit User",
+      fullName: "Tatya User",
       email: "user@example.com",
       phone: "9876543210",
       bio: "Experienced equipment operator providing reliable services.",
@@ -93,7 +94,7 @@ export default function SettingsPage() {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={profileForm.watch("avatarUrl") || "https://placehold.co/100x100.png"} alt="User Avatar" data-ai-hint="user avatar" />
-                  <AvatarFallback>{profileForm.watch("fullName")?.substring(0,2).toUpperCase() || "HU"}</AvatarFallback>
+                  <AvatarFallback>{profileForm.watch("fullName")?.substring(0,2).toUpperCase() || "TU"}</AvatarFallback>
                 </Avatar>
                 <FormField
                   control={profileForm.control}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -56,7 +57,7 @@ function DashboardSidebar() {
           <span className={cn(
             "font-semibold text-xl text-foreground",
             !open && !isMobile && "hidden" // Hide text when collapsed on desktop
-          )}>Harit Mitra</span>
+          )}>Tatya Mitra</span>
         </Link>
         {!isMobile && <SidebarTrigger className="hidden group-data-[collapsible=icon]:hidden" />}
       </SidebarHeader>

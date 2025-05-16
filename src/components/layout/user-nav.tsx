@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -29,14 +30,14 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary">
             <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
-            <AvatarFallback>HM</AvatarFallback>
+            <AvatarFallback>TU</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Harit User</p>
+            <p className="text-sm font-medium leading-none">Tatya User</p>
             <p className="text-xs leading-none text-muted-foreground">
               user@example.com
             </p>

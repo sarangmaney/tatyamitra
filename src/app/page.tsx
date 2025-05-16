@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -25,7 +26,7 @@ export default function LoginPage() {
           <div className="flex justify-center items-center mb-4">
             <Logo className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight">Harit Mitra</CardTitle>
+          <CardTitle className="text-3xl font-bold tracking-tight">Tatya Mitra</CardTitle>
           <CardDescription>Welcome back! Please enter your phone number to login.</CardDescription>
         </CardHeader>
         <CardContent>
