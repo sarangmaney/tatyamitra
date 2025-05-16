@@ -8,9 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EquipmentCard, type Equipment } from "@/components/dashboard/equipment-card"; // Updated path
+import { EquipmentCard, type Equipment } from "@/components/dashboard/equipment-card";
 import { ReviewCard, type Review } from "@/components/portfolio/review-card";
-import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, Tractor } from "lucide-react"; // Added Tractor
+import { Share2, Copy, MessageCircle, Star, Briefcase, Users, Award, Tractor } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Enhanced Equipment type for portfolio context, including yieldIncreaseBenefit
@@ -93,6 +93,21 @@ const mockVendorData: VendorPortfolioData = {
       reviewCount: 10,
       vendorPhoneNumber: "+919876543210",
       yieldIncreaseBenefit: "Provides consistent and optimal water supply, reducing water stress on crops. Can improve yield by 5-10% compared to manual or flood irrigation, especially in water-scarce areas.",
+    },
+     {
+      id: "eq4",
+      name: "Heavy Duty Cultivator",
+      type: "Implement",
+      category: "Tillage Equipment",
+      specifications: "9-tyne, suitable for 50-60 HP tractors, for deep soil preparation.",
+      status: "available",
+      imageUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "cultivator farm",
+      price: "₹400/hour",
+      rating: 4.6,
+      reviewCount: 15,
+      vendorPhoneNumber: "+919876543210",
+      yieldIncreaseBenefit: "Breaks up hard soil pans, improves water infiltration and root development, leading to yield increases of 8-12%.",
     },
   ],
   experience: {
@@ -179,10 +194,9 @@ export default function VendorPortfolioPage() {
 
       <main className="container mx-auto py-8 px-4 md:px-6">
         <Tabs defaultValue="equipment" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 mb-6"> {/* Reduced to 2 tabs */}
             <TabsTrigger value="equipment">Our Equipment</TabsTrigger>
             <TabsTrigger value="experience">Our Experience</TabsTrigger>
-            <TabsTrigger value="reviews">Customer Reviews</TabsTrigger>
           </TabsList>
 
           <TabsContent value="equipment">
@@ -193,18 +207,18 @@ export default function VendorPortfolioPage() {
               </CardHeader>
               <CardContent>
                 {vendorData.equipments.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1"> {/* Horizontal scroll container */}
                     {vendorData.equipments.map((equipment) => (
-                      <EquipmentCard
-                        key={equipment.id}
-                        equipment={{
-                          ...equipment,
-                          // Ensure dataAiHint is present, fallback to generic if necessary
-                          dataAiHint: equipment.dataAiHint || (equipment.type.toLowerCase().includes("drone") ? "drone agriculture" : "farm equipment")
-                        }}
-                        onEdit={() => {}} // Not editable on public portfolio
-                        onDelete={() => {}} // Not deletable
-                      />
+                       <div key={equipment.id} className="flex-shrink-0 w-[300px] md:w-[330px] lg:w-[350px]"> {/* Card width control */}
+                        <EquipmentCard
+                          equipment={{
+                            ...equipment,
+                            dataAiHint: equipment.dataAiHint || (equipment.type.toLowerCase().includes("drone") ? "drone agriculture" : "farm equipment")
+                          }}
+                          onEdit={() => {}} 
+                          onDelete={() => {}} 
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -234,25 +248,26 @@ export default function VendorPortfolioPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>What Our Customers Say</CardTitle>
-                <CardDescription>Honest feedback from farmers who have partnered with us.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {vendorData.reviews.length > 0 ? (
-                  vendorData.reviews.map((review) => (
-                    <ReviewCard key={review.id} review={review} />
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
+
+        {/* Reviews Section - Moved below tabs */}
+        <section className="mt-12">
+          <Card>
+            <CardHeader>
+              <CardTitle>What Our Customers Say</CardTitle>
+              <CardDescription>Honest feedback from farmers who have partnered with us.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {vendorData.reviews.length > 0 ? (
+                vendorData.reviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} />
+                ))
+              ) : (
+                <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
       </main>
 
       <footer className="bg-muted py-8 text-center mt-12">
@@ -266,3 +281,5 @@ export default function VendorPortfolioPage() {
     </div>
   );
 }
+
+    
