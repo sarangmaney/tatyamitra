@@ -20,12 +20,13 @@ interface PortfolioEquipment extends Equipment {
 interface VendorPortfolioData {
   id: string;
   name: string;
-  bio: string;
+  bio: string; // Main vendor bio displayed prominently
+  detailedBio?: string; // Longer bio for "About" section if needed, currently unused
   profileImageUrl: string;
   dataAiHint?: string;
   location: string;
   contactEmail: string;
-  collageImages: Array<{ src: string; alt: string; dataAiHint?: string }>;
+  collageImages: Array<{ src: string; alt: string; dataAiHint?: string }>; // Kept for data structure, not rendered
   equipments: PortfolioEquipment[];
   experience: {
     summary: string;
@@ -48,9 +49,8 @@ const mockVendorData: VendorPortfolioData = {
   dataAiHint: "vendor profile",
   location: "Satara, Maharashtra",
   contactEmail: "contact@greensproutagri.com",
-  collageImages: [
+  collageImages: [ // This is no longer directly rendered in a collage
     { src: "https://placehold.co/300x200.png", alt: "Farm equipment in action", dataAiHint: "tractor field" },
-    // Add more images for a real collage or for the gallery
   ],
   equipments: [
     {
@@ -193,15 +193,17 @@ export default function VendorPortfolioPage() {
     });
   };
 
-  const handleViewMoreGallery = () => {
-    toast({
-      title: "View More Gallery",
-      description: "Photo gallery would open here.",
-    });
-  };
+  // Placeholder for gallery opening logic
+  // const handleViewMoreGallery = () => {
+  //   toast({
+  //     title: "View More Gallery",
+  //     description: "Photo gallery would open here.",
+  //   });
+  // };
 
   return (
     <div className="bg-background min-h-screen">
+      {/* Main Vendor Header: Avatar, Name, Bio, Contact, Share */}
       <header className="bg-card shadow-sm">
         <div className="container mx-auto p-6">
           <div className="md:flex md:items-center md:justify-between">
@@ -229,32 +231,15 @@ export default function VendorPortfolioPage() {
             </div>
           </div>
           
-          {/* Single Image and Bio Section */}
-          <div className="mt-6 flex flex-col md:flex-row md:items-start gap-6 md:gap-8">
-            {vendorData.collageImages && vendorData.collageImages.length > 0 && (
-              <div className="w-full md:w-2/5 relative aspect-[4/3] md:aspect-[1/1] rounded-lg overflow-hidden shadow-lg group">
-                <Image
-                  src={vendorData.collageImages[0].src}
-                  alt={vendorData.collageImages[0].alt}
-                  fill={true}
-                  style={{objectFit: "cover"}}
-                  className="transition-transform duration-300 group-hover:scale-105"
-                  data-ai-hint={vendorData.collageImages[0].dataAiHint || "agriculture image"}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 33vw"
-                />
-              </div>
-            )}
-            <div className="w-full md:w-3/5 flex flex-col justify-start">
-              <h2 className="text-2xl font-semibold text-foreground mb-2">About</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {vendorData.bio}
-              </p>
-            </div>
-          </div>
+          {/* Vendor Bio Text - Displayed directly under name/contact */}
+          <p className="mt-4 text-foreground leading-relaxed">
+            {vendorData.bio}
+          </p>
 
         </div>
       </header>
 
+      {/* Sticky Navigation Buttons for Sections */}
       <div id="sticky-nav-buttons" className="sticky top-0 bg-background/90 backdrop-blur-sm z-30 shadow-md">
         <div className="container mx-auto flex space-x-1 p-2">
           <Button variant="ghost" onClick={() => handleScrollToSection('experience-section')} className="flex-1 justify-center text-accent hover:bg-accent/10 hover:text-accent-foreground">
@@ -268,6 +253,7 @@ export default function VendorPortfolioPage() {
 
       <main className="container mx-auto py-8 px-4 md:px-6">
         
+        {/* Equipment Section - Always Visible */}
         <section id="equipment-section" className="mb-12 pt-4">
             <Card className="shadow-xl">
               <CardHeader>
@@ -306,6 +292,7 @@ export default function VendorPortfolioPage() {
             </Card>
         </section>
 
+        {/* Experience Section */}
         <section id="experience-section" className="mb-12 pt-16 -mt-16"> {/* pt-16 and -mt-16 for sticky nav offset */}
           <Card className="shadow-xl">
             <CardHeader>
@@ -327,6 +314,7 @@ export default function VendorPortfolioPage() {
           </Card>
         </section>
 
+        {/* Reviews Section */}
         <section id="reviews-section" className="mb-12 pt-16 -mt-16"> {/* pt-16 and -mt-16 for sticky nav offset */}
           <Card className="shadow-xl">
             <CardHeader>
