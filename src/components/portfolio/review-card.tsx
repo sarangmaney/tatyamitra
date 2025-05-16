@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -13,6 +12,7 @@ export interface Review {
   rating: number; // 0-5
   comment: string;
   date: string; // Formatted date string
+  dataAiHint?: string; // For placeholder image generation
 }
 
 interface ReviewCardProps {
@@ -30,7 +30,11 @@ export function ReviewCard({ review }: ReviewCardProps) {
       <CardContent className="p-6">
         <div className="flex items-start space-x-4">
           <Avatar className="h-12 w-12 border">
-            <AvatarImage src={review.reviewerImageUrl || "https://placehold.co/50x50.png"} alt={review.reviewerName} data-ai-hint="person avatar" />
+            <AvatarImage 
+              src={review.reviewerImageUrl || "https://placehold.co/50x50.png"} 
+              alt={review.reviewerName} 
+              data-ai-hint={review.dataAiHint || "person avatar"} 
+            />
             <AvatarFallback>{getAvatarFallback(review.reviewerName)}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
@@ -53,5 +57,3 @@ export function ReviewCard({ review }: ReviewCardProps) {
     </Card>
   );
 }
-
-    
