@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Equipment } from "./equipment-card"; // Using the enhanced Equipment type
+import type { Equipment } from "./equipment-card"; 
 
 const equipmentFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters.").max(100),
@@ -26,16 +27,17 @@ const equipmentFormSchema = z.object({
   status: z.enum(["available", "unavailable", "maintenance"]),
   price: z.string().optional().describe("e.g. ₹500/hr or ₹2000/acre"),
   imageUrl: z.string().url("Please enter a valid image URL.").optional(),
+  dataAiHint: z.string().max(30, "AI hint too long").optional().describe("Keywords for AI image search e.g., 'tractor field'"),
   vendorPhoneNumber: z.string().optional().describe("Vendor's WhatsApp contact number, e.g., +91XXXXXXXXXX"),
   videoUrl: z.string().url("Please enter a valid video URL (e.g., YouTube link).").optional().describe("URL for equipment video demo"),
-  // Rating and reviewCount are usually not set via form directly but through user interactions
+  yieldIncreaseBenefit: z.string().max(200, "Benefit description too long.").optional().describe("How this equipment helps increase yield."),
 });
 
 type EquipmentFormValues = z.infer<typeof equipmentFormSchema>;
 
 interface AddEquipmentFormProps {
   onSubmit: (data: EquipmentFormValues) => void;
-  defaultValues?: Partial<Equipment>; // Using Equipment type from equipment-card which includes new fields
+  defaultValues?: Partial<Equipment>; 
   isLoading?: boolean;
 }
 
@@ -50,8 +52,10 @@ export function AddEquipmentForm({ onSubmit, defaultValues, isLoading }: AddEqui
       status: defaultValues?.status || "available",
       price: defaultValues?.price || "",
       imageUrl: defaultValues?.imageUrl || "",
+      dataAiHint: defaultValues?.dataAiHint || "",
       vendorPhoneNumber: defaultValues?.vendorPhoneNumber || "",
       videoUrl: defaultValues?.videoUrl || "",
+      yieldIncreaseBenefit: defaultValues?.yieldIncreaseBenefit || "",
     },
   });
 
@@ -119,6 +123,25 @@ export function AddEquipmentForm({ onSubmit, defaultValues, isLoading }: AddEqui
             </FormItem>
           )}
         />
+         <FormField
+          control={form.control}
+          name="yieldIncreaseBenefit"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Yield Increase Benefit (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="e.g., Improves soil aeration, potentially boosting yield by 10%."
+                  className="resize-none"
+                  rows={2}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>Briefly describe how it helps increase crop yield.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -175,6 +198,20 @@ export function AddEquipmentForm({ onSubmit, defaultValues, isLoading }: AddEqui
         />
         <FormField
           control={form.control}
+          name="dataAiHint"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image AI Hint (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., tractor field, drone spray" {...field} />
+              </FormControl>
+              <FormDescription>Keywords for AI image search (max 2 words).</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="videoUrl"
           render={({ field }) => (
             <FormItem>
@@ -209,3 +246,5 @@ export function AddEquipmentForm({ onSubmit, defaultValues, isLoading }: AddEqui
     </Form>
   );
 }
+
+    
