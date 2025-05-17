@@ -24,10 +24,13 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-8">
+      {/* Welcome message is now part of AppHeader for dashboard pages */}
+      {/* 
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome to Tatya Mitra!</h1>
         <p className="text-muted-foreground">Here&apos;s an overview of your activities.</p>
-      </div>
+      </div> 
+      */}
 
       {/* Income Overview Card */}
       <Card className="mb-8 shadow-xl">

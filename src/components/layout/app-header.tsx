@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -7,27 +8,17 @@ import { UserNav } from "@/components/layout/user-nav";
 import { Logo } from "@/components/icons";
 import { Menu, Bell } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const pathname = usePathname();
-  // isMobile from useSidebar context is derived from useIsMobile hook,
-  // so it reflects viewport width and is suitable for adaptive UI rendering.
   const { toggleSidebar, isMobile } = useSidebar(); 
 
   const isDashboardPage = pathname.startsWith("/dashboard");
 
   // Determine if the brand (Logo + Title) should be shown.
-  // Show if:
-  // 1. We are on a desktop view (isMobile is false).
-  // 2. OR We are on a mobile view AND not on a dashboard page 
-  //    (on mobile dashboard, the menu icon is shown instead of the brand).
   const showBrand = !isMobile || (isMobile && !isDashboardPage);
-  // This is equivalent to the original more succinct condition: !(isDashboardPage && isMobile)
-
   // Determine if the mobile menu toggle should be shown.
-  // Show if:
-  // 1. We are on a mobile view (isMobile is true).
-  // 2. AND We are on a dashboard page.
   const showMobileMenuToggle = isMobile && isDashboardPage;
 
   return (
@@ -40,7 +31,7 @@ export function AppHeader() {
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
-              className="md:hidden" // Reinforces it's for mobile viewports
+              className="md:hidden" 
             >
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle navigation menu</span>
@@ -58,7 +49,7 @@ export function AppHeader() {
 
         {/* Right Section: Notifications and User Navigation */}
         <div className="flex items-center space-x-2">
-          {!isMobile && ( // Bell icon only shown on desktop
+          {!isMobile && ( 
             <Button variant="ghost" size="icon" title="View notifications">
               <Bell className="h-5 w-5" />
             </Button>
@@ -66,6 +57,16 @@ export function AppHeader() {
           <UserNav />
         </div>
       </div>
+
+      {/* Conditional Dashboard Welcome Message */}
+      {isDashboardPage && (
+        <div className="bg-background border-b border-t"> {/* Added border-t for separation */}
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Welcome to Tatya Mitra!</h1>
+            <p className="text-sm text-muted-foreground">Here&apos;s an overview of your activities.</p>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
