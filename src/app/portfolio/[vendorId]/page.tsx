@@ -21,12 +21,10 @@ interface VendorPortfolioData {
   id: string;
   name: string;
   bio: string; // Main vendor bio displayed prominently
-  detailedBio?: string; // Longer bio for "About" section if needed, currently unused
   profileImageUrl: string;
   dataAiHint?: string;
   location: string;
   contactEmail: string;
-  collageImages: Array<{ src: string; alt: string; dataAiHint?: string }>; // Kept for data structure, not rendered
   equipments: PortfolioEquipment[];
   experience: {
     summary: string;
@@ -49,9 +47,6 @@ const mockVendorData: VendorPortfolioData = {
   dataAiHint: "vendor profile",
   location: "Satara, Maharashtra",
   contactEmail: "contact@greensproutagri.com",
-  collageImages: [ // This is no longer directly rendered in a collage
-    { src: "https://placehold.co/300x200.png", alt: "Farm equipment in action", dataAiHint: "tractor field" },
-  ],
   equipments: [
     {
       id: "eq1",
@@ -126,11 +121,11 @@ const mockVendorData: VendorPortfolioData = {
     ],
   },
   reviews: [
-    { id: "r1", reviewerName: "Sunil Patil", rating: 5, comment: "Excellent equipment and very professional service. The power tiller helped me prepare my land much faster.", date: "2024-07-15", reviewerImageUrl: "https://placehold.co/50x50.png?text=SP", dataAiHint: "farmer portrait" },
-    { id: "r2", reviewerName: "Anita Desai", rating: 4, comment: "The seeding drone was a game-changer for my farm. Good support from the team.", date: "2024-06-28", reviewerImageUrl: "https://placehold.co/50x50.png?text=AD", dataAiHint: "woman farmer" },
-    { id: "r3", reviewerName: "Rajesh Kumar", rating: 5, comment: "Highly recommend GreenSprout! Their machinery is well-maintained.", date: "2024-05-10", reviewerImageUrl: "https://placehold.co/50x50.png?text=RK", dataAiHint: "indian farmer" },
-    { id: "r4", reviewerName: "Priya Mehta", rating: 5, comment: "Top-notch service and great advice. The team is knowledgeable and helped me pick the right tools for my sugarcane crop.", date: "2024-04-20", reviewerImageUrl: "https://placehold.co/50x50.png?text=PM", dataAiHint: "farmer profile" },
-    { id: "r5", reviewerName: "Vikram Bhosle", rating: 4, comment: "Good range of equipment. The cultivator I rented was in excellent condition and performed well.", date: "2024-03-11", reviewerImageUrl: "https://placehold.co/50x50.png?text=VB", dataAiHint: "male farmer" },
+    { id: "r1", reviewerName: "Sunil Patil", rating: 5, comment: "Excellent equipment and very professional service. The power tiller helped me prepare my land much faster.", date: "2024-07-15", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "farmer portrait" },
+    { id: "r2", reviewerName: "Anita Desai", rating: 4, comment: "The seeding drone was a game-changer for my farm. Good support from the team.", date: "2024-06-28", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "woman farmer" },
+    { id: "r3", reviewerName: "Rajesh Kumar", rating: 5, comment: "Highly recommend GreenSprout! Their machinery is well-maintained.", date: "2024-05-10", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "indian farmer" },
+    { id: "r4", reviewerName: "Priya Mehta", rating: 5, comment: "Top-notch service and great advice. The team is knowledgeable and helped me pick the right tools for my sugarcane crop.", date: "2024-04-20", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "farmer profile" },
+    { id: "r5", reviewerName: "Vikram Bhosle", rating: 4, comment: "Good range of equipment. The cultivator I rented was in excellent condition and performed well.", date: "2024-03-11", reviewerImageUrl: "https://placehold.co/50x50.png", dataAiHint: "male farmer" },
   ],
 };
 
@@ -193,20 +188,13 @@ export default function VendorPortfolioPage() {
     });
   };
 
-  // Placeholder for gallery opening logic
-  // const handleViewMoreGallery = () => {
-  //   toast({
-  //     title: "View More Gallery",
-  //     description: "Photo gallery would open here.",
-  //   });
-  // };
 
   return (
     <div className="bg-background min-h-screen">
       {/* Main Vendor Header: Avatar, Name, Bio, Contact, Share */}
       <header className="bg-card shadow-sm">
         <div className="container mx-auto p-6">
-          <div className="md:flex md:items-center md:justify-between">
+          <div className="md:flex md:items-start md:justify-between"> {/* items-start for bio alignment */}
             <div className="flex items-center space-x-4">
               <Avatar className="h-24 w-24 border-2 border-primary">
                 <AvatarImage src={vendorData.profileImageUrl} alt={vendorData.name} data-ai-hint={vendorData.dataAiHint || "vendor profile"} />
@@ -232,7 +220,7 @@ export default function VendorPortfolioPage() {
           </div>
           
           {/* Vendor Bio Text - Displayed directly under name/contact */}
-          <p className="mt-4 text-foreground leading-relaxed">
+          <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
             {vendorData.bio}
           </p>
 
@@ -254,7 +242,7 @@ export default function VendorPortfolioPage() {
       <main className="container mx-auto py-8 px-4 md:px-6">
         
         {/* Equipment Section - Always Visible */}
-        <section id="equipment-section" className="mb-12 pt-4">
+        <section id="equipment-section" className="mb-12 pt-4"> {/* pt-4 to avoid title clash with sticky nav */}
             <Card className="shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl">Available Equipment & Services</CardTitle>
@@ -362,4 +350,4 @@ export default function VendorPortfolioPage() {
   );
 }
 
-      
+    

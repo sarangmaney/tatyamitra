@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -173,7 +174,7 @@ export function BookingList() {
               <p className="mb-2 text-sm">Location for booking <span className="font-semibold">{bookings.find(b => b.farmerLocation)?.id}</span>: {bookings.find(b => b.farmerLocation)?.farmerLocation?.address}</p>
               <div className="aspect-video w-full bg-muted rounded-md overflow-hidden">
                 <Image
-                  src="https://placehold.co/800x450.png?text=Farmer+Location+Map"
+                  src="https://placehold.co/800x450.png"
                   alt="Farmer Location Map"
                   width={800}
                   height={450}
@@ -190,3 +191,5 @@ export function BookingList() {
     </div>
   );
 }
+
+    

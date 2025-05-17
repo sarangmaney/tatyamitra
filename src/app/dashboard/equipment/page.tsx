@@ -160,7 +160,7 @@ export default function EquipmentPage() {
               key={equipment.id} 
               equipment={{
                 ...equipment,
-                imageUrl: equipment.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(equipment.name.substring(0,15))}`,
+                imageUrl: equipment.imageUrl || `https://placehold.co/600x400.png`,
                 dataAiHint: equipment.dataAiHint || (equipment.type.toLowerCase().includes("drone") ? "drone agriculture" : "tractor farm equipment")
               }} 
               onEdit={handleEdit}

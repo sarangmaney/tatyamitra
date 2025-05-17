@@ -1,3 +1,4 @@
+
 import { BookingList } from "@/components/dashboard/booking-list";
 
 export default function BookingsPage() {
@@ -11,3 +12,5 @@ export default function BookingsPage() {
     </div>
   );
 }
+
+    
