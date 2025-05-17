@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { UserNav } from "@/components/layout/user-nav";
 import { Logo } from "@/components/icons";
 import { Menu, Bell } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar"; // Ensure this path is correct
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
@@ -60,7 +60,7 @@ export function AppHeader() {
 
       {/* Conditional Dashboard Welcome Message */}
       {isDashboardPage && (
-        <div className="bg-background border-b border-t"> {/* Added border-t for separation */}
+        <div className="bg-background border-b"> {/* Removed border-t for a more unified look with the bar above */}
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">Welcome to Tatya Mitra!</h1>
             <p className="text-sm text-muted-foreground">Here&apos;s an overview of your activities.</p>
