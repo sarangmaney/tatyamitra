@@ -18,6 +18,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import NavLink from "@/components/layout/nav-link"; // Import NavLink
 import { UserNav } from "@/components/layout/user-nav";
 import { Logo } from "@/components/icons";
 import {
@@ -29,6 +30,8 @@ import {
   SettingsIcon,
   LogOut,
   Menu,
+  LockIcon,
+  UnlockIcon,
   UserSquare, // Added UserSquare icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,12 +43,24 @@ const navItems = [
   { href: "/dashboard/bookings", label: "Bookings", icon: ClipboardList },
   { href: "/dashboard/pricing-tool", label: "Pricing Tool", icon: Wand2 },
   { href: "/portfolio/vendor_12345xyz", label: "Portfolio", icon: UserSquare }, // Added Portfolio link
+  { href: "/dashboard/vendors", label: "Vendors", icon: LockIcon, passwordProtected: true },
   { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 function DashboardSidebar() {
   const pathname = usePathname();
   const { open, setOpen, isMobile } = useSidebar();
+
+  const [password, setPassword] = React.useState("");
+  const [isLocked, setIsLocked] = React.useState(true);
+
+  const handlePasswordSubmit = (href: string) => {
+    if (password === "9595") {
+      setIsLocked(false);
+    } else {
+      alert("Incorrect password");
+    }
+  };
 
   return (
     <Sidebar
@@ -65,21 +80,46 @@ function DashboardSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref legacyBehavior>
-                <SidebarMenuButton
-                  isActive={pathname === item.href || (item.href !== "/dashboard" && item.href !== "/portfolio/vendor_12345xyz" && pathname.startsWith(item.href)) || (item.href === "/portfolio/vendor_12345xyz" && pathname.startsWith("/portfolio"))}
-                  tooltip={{ children: item.label, side: "right", align: "center"}}
-                  onClick={() => isMobile && setOpen(false)}
-                  className="justify-start"
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className={cn(!open && !isMobile && "hidden")}>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          ))}
+ {navItems.map((item) => (
+ <SidebarMenuItem key={item.href}>
+ {item.passwordProtected ? (
+ <>
+ {isLocked ? (
+ <div className="flex items-center justify-between">
+ <div className="flex items-center gap-2">
+ <LockIcon className="h-5 w-5" />
+ <span className={cn(!open && !isMobile && "hidden")}>{item.label}</span>
+ </div>
+ <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="ml-2 p-1 border rounded text-sm"
+                />
+ <Button size="sm" onClick={() => handlePasswordSubmit(item.href)} className="ml-2">
+                  Unlock
+ </Button>
+ </div>
+ ) : (
+ <Link href={item.href} passHref legacyBehavior>
+ <SidebarMenuButton
+ isActive={pathname === item.href || (item.href !== "/dashboard" && item.href !== "/portfolio/vendor_12345xyz" && pathname.startsWith(item.href)) || (item.href === "/portfolio/vendor_12345xyz" && pathname.startsWith("/portfolio")) || (item.passwordProtected && pathname.startsWith(item.href))}
+ tooltip={{ children: item.label, side: "right", align: "center"}}
+ onClick={() => isMobile && setOpen(false)}
+ className="justify-start"
+ >
+ <UnlockIcon className="h-5 w-5" />
+ <span className={cn(!open && !isMobile && "hidden")}>{item.label}</span>
+ </SidebarMenuButton>
+ </Link>
+ )}
+ </>
+ ) : (
+ <NavLink item={item} pathname={pathname} isMobile={isMobile} setOpen={setOpen} open={open} />
+ )}
+ </SidebarMenuItem>
+ ))}
+
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4 mt-auto border-t">
