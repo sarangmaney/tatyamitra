@@ -1,4 +1,15 @@
 
+// ================================================================================================
+// CRITICAL DEPLOYMENT CHECK:
+// If you are seeing build errors related to Zod or "TypeError: d.z.number(...).optional(...).min is not a function",
+// 1. ENSURE THIS FILE AND /api/vendors/[vendorId]/equipment/[equipmentId]/route.ts HAVE THE CORRECTED ZOD SCHEMA:
+//    e.g., rating: z.number().min(0).max(5).optional() (min/max BEFORE optional).
+// 2. ENSURE THESE CHANGES ARE COMMITTED AND PUSHED TO YOUR GIT REPOSITORY.
+// 3. VERIFY VERCEL IS DEPLOYING THE LATEST COMMIT HASH.
+// 4. SET UP FIREBASE ADMIN SDK ENVIRONMENT VARIABLES IN YOUR VERCEL PROJECT SETTINGS.
+//    The log "Firebase Admin SDK not initialized" means these are missing or incorrect.
+// ================================================================================================
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin'; // Ensure Firebase Admin is initialized
@@ -22,7 +33,7 @@ const EquipmentItemSchema = z.object({
   pricePerAcre: z.number().optional(),
   pricePerDay: z.number().optional(),
   pricePerHour: z.number().optional(),
-  rating: z.number().min(0).max(5).optional(), // Corrected: .min().max() before .optional()
+  rating: z.number().min(0).max(5).optional(), // CORRECTED: .min().max() before .optional()
   tankSize: z.string().optional().describe("e.g., '10L', '16L' for drones"),
   acresCapacityPerDay: z.number().optional(),
   primaryImageUrl: z.string().url().optional(),
@@ -54,8 +65,6 @@ export async function GET(request: NextRequest) {
     const validatedQuery = VendorQuerySchema.parse(queryParams);
     const { pincode, equipmentCategory, lat, lon, radius } = validatedQuery;
 
-    // If Firebase Admin is not initialized (e.g., missing credentials), db will be null.
-    // Fallback to mock data if db is not available.
     if (!db) {
       console.warn('Firestore not initialized, serving mock data for /api/vendors');
       const mockVendors = [
@@ -116,16 +125,13 @@ export async function GET(request: NextRequest) {
     // Real Firestore logic
     let vendorQuery: admin.firestore.Query = db.collection('vendor');
 
-    // Basic filtering example (more complex filtering like by pincode directly on nested location
-    // or geospatial queries might require different data structures or Cloud Functions)
     if (pincode) {
-      // This is a simplified example; direct pincode query on a nested map might not be efficient.
-      // You might have a top-level 'pincodes' collection or denormalize pincode.
-      // For now, this will query all vendors and filter client-side if not indexed, which is not ideal for large datasets.
-      // vendorQuery = vendorQuery.where('location.pincode', '==', pincode); // Example if pincode was directly under location
+      // This assumes you have a 'pincode' field at the top level of your vendor documents
+      // or nested like 'location.pincode' AND that this field is indexed for querying.
+      // vendorQuery = vendorQuery.where('location.pincode', '==', pincode); // Example for nested
+      // vendorQuery = vendorQuery.where('pincode', '==', pincode); // Example for top-level
     }
-    // Note: Radius-based filtering (lat, lon, radius) is complex with Firestore alone and usually requires
-    // server-side calculation (e.g., in a Cloud Function) or a specialized geo-query service.
+    // Note: Radius-based filtering (lat, lon, radius) is complex with Firestore alone.
 
     const vendorSnapshots = await vendorQuery.get();
     const vendorsDataFromDb: VendorResponseItem[] = [];
@@ -133,9 +139,7 @@ export async function GET(request: NextRequest) {
     for (const vendorDoc of vendorSnapshots.docs) {
       const vendorData = vendorDoc.data();
       
-      // Example: If pincode filtering is done post-fetch (not recommended for large scale)
       if (pincode && vendorData.pincode !== pincode && vendorData.location?.pincode !== pincode) {
-         // Simple check, adjust based on your actual structure (e.g. vendorData.pincode or vendorData.location.pincode)
         continue;
       }
 
@@ -162,13 +166,12 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      // Only add vendor if they have matching equipment (if category is specified) or if no category filter.
       if (!equipmentCategory || (equipmentCategory && equipmentsList.length > 0)) {
         vendorsDataFromDb.push({
           vendorId: vendorDoc.id,
           vendorName: vendorData.vendorName || 'Unknown Vendor',
           location: {
-            district: vendorData.district || vendorData.location?.district || 'Unknown District', // Check top level then nested
+            district: vendorData.district || vendorData.location?.district || 'Unknown District',
             taluka: vendorData.taluka || vendorData.location?.taluka,
           },
           profileImageUri: vendorData.profileImageUri || 'https://placehold.co/100x100.png',

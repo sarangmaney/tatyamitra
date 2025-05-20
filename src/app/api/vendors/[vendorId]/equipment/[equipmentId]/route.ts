@@ -1,4 +1,15 @@
 
+// ================================================================================================
+// CRITICAL DEPLOYMENT CHECK:
+// If you are seeing build errors related to Zod or "TypeError: d.z.number(...).optional(...).min is not a function",
+// 1. ENSURE THIS FILE AND /api/vendors/route.ts HAVE THE CORRECTED ZOD SCHEMA:
+//    e.g., rating: z.number().min(0).max(5).optional() (min/max BEFORE optional).
+// 2. ENSURE THESE CHANGES ARE COMMITTED AND PUSHED TO YOUR GIT REPOSITORY.
+// 3. VERIFY VERCEL IS DEPLOYING THE LATEST COMMIT HASH.
+// 4. SET UP FIREBASE ADMIN SDK ENVIRONMENT VARIABLES IN YOUR VERCEL PROJECT SETTINGS.
+//    The log "Firebase Admin SDK not initialized" means these are missing or incorrect.
+// ================================================================================================
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin'; // Ensure Firebase Admin is initialized
@@ -22,7 +33,7 @@ const DetailedEquipmentSchema = z.object({
   pricePerHour: z.number().optional(),
   availabilityStatus: z.enum(["available", "unavailable", "maintenance"]),
   batteriesAvailable: z.number().optional(),
-  rating: z.number().min(0).max(5).optional(), // Corrected: .min().max() before .optional()
+  rating: z.number().min(0).max(5).optional(), // CORRECTED: .min().max() before .optional()
   images: z.array(z.string().url()).optional().describe("Array of image URLs"),
   videoUrl: z.string().url().optional(),
   location: z.object({
@@ -44,11 +55,8 @@ export async function GET(
       return NextResponse.json({ error: 'Vendor ID and Equipment ID are required' }, { status: 400 });
     }
 
-    // If Firebase Admin is not initialized (e.g., missing credentials), db will be null.
-    // Fallback to mock data if db is not available.
     if (!db) {
       console.warn(`Firestore not initialized, serving mock data for /api/vendors/${vendorId}/equipment/${equipmentId}`);
-      // Mock data logic (as previously defined)
       if (vendorId === "vendor_12345xyz" && equipmentId === "drone_abc_789") {
         const mockEquipmentDetail = {
           equipmentId: "drone_abc_789",
