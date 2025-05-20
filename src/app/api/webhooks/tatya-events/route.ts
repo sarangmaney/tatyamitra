@@ -4,11 +4,31 @@ import { type NextRequest, NextResponse } from 'next/server';
 /**
  * API route to handle incoming webhook events from the "Tatya" service (or similar).
  * This endpoint should be provided as the callback URL in the external service's webhook settings.
+ * 
+ * To secure this endpoint, the calling service should be configured to send a secret token
+ * in a custom header (e.g., 'X-Tatya-Webhook-Secret'). This endpoint will then verify that token.
  */
+
+const EXPECTED_WEBHOOK_SECRET = process.env.TATYA_WEBHOOK_SECRET;
+
 export async function POST(request: NextRequest) {
+  // 1. Verify the secret token
+  const receivedSecret = request.headers.get('X-Tatya-Webhook-Secret');
+
+  if (!EXPECTED_WEBHOOK_SECRET) {
+    console.error('Webhook secret is not configured in environment variables (TATYA_WEBHOOK_SECRET). Denying all requests.');
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+  }
+
+  if (receivedSecret !== EXPECTED_WEBHOOK_SECRET) {
+    console.warn('Invalid or missing webhook secret. Request denied.');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // If secret is valid, proceed to process the webhook
   try {
     const body = await request.json();
-    console.log('Received webhook event:', JSON.stringify(body, null, 2));
+    console.log('Received VERIFIED webhook event:', JSON.stringify(body, null, 2));
 
     // Process the webhook event here based on its content.
     // For example, if it's an SMS status update:
@@ -20,10 +40,10 @@ export async function POST(request: NextRequest) {
 
     // It's crucial to respond quickly with a 200 OK to the webhook provider.
     // Actual processing can be done asynchronously if needed.
-    return NextResponse.json({ message: 'Webhook received successfully' }, { status: 200 });
+    return NextResponse.json({ message: 'Webhook received and verified successfully' }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Error processing webhook:', error);
+    console.error('Error processing verified webhook:', error);
     // Return an error status if something goes wrong during initial processing (e.g., JSON parsing)
     // Be careful not to return 5xx for issues in your async processing,
     // as the provider might retry excessively.
@@ -37,5 +57,5 @@ export async function GET(request: NextRequest) {
   // Logic for verification if needed by the provider.
   // Often involves returning a specific challenge token.
   // Check the provider's documentation.
-  return NextResponse.json({ message: 'Webhook endpoint is active. Ready for POST requests.' }, { status: 200 });
+  return NextResponse.json({ message: 'Webhook endpoint is active and expects POST requests with a valid secret.' }, { status: 200 });
 }
