@@ -45,14 +45,16 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2 text-sm">
-          <p>
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-medium text-primary hover:underline">
+        <CardFooter className="flex flex-col space-y-4 text-sm text-center"> {/* Increased space-y for better separation */}
+          <div> {/* Wrapped text in a div for better control if needed */}
+            <p>Don&apos;t have an account?</p>
+          </div>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/signup">
               Sign up
             </Link>
-          </p>
-           <p>
+          </Button>
+          <p className="pt-2"> {/* Added padding-top to separate from button */}
             Proceed to KYC?{" "}
             <Link href="/kyc" className="font-medium text-primary hover:underline">
               KYC Verification
