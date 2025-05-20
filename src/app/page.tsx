@@ -33,7 +33,19 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="Enter your phone number" required />
+              <div className="flex items-center">
+                <span className="flex h-10 items-center justify-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                  +91
+                </span>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your 10-digit number"
+                  required
+                  className="rounded-l-none"
+                  maxLength={10}
+                />
+              </div>
             </div>
             {/* In a real app, an OTP input would appear after phone submission */}
             {/* <div className="space-y-2">
@@ -45,8 +57,8 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 text-sm text-center"> {/* Increased space-y for better separation */}
-          <div> {/* Wrapped text in a div for better control if needed */}
+        <CardFooter className="flex flex-col space-y-4 text-sm text-center">
+          <div>
             <p>Don&apos;t have an account?</p>
           </div>
           <Button asChild variant="outline" className="w-full">
@@ -54,7 +66,7 @@ export default function LoginPage() {
               Sign up
             </Link>
           </Button>
-          <p className="pt-2"> {/* Added padding-top to separate from button */}
+          <p className="pt-2">
             Proceed to KYC?{" "}
             <Link href="/kyc" className="font-medium text-primary hover:underline">
               KYC Verification
