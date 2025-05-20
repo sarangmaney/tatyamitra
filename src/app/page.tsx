@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isOtpWidgetInitialized, setIsOtpWidgetInitialized] = React.useState(false);
+  // Ensure a unique ID for the widget container, especially if this component could re-render.
   const [otpWidgetContainerId] = React.useState(`otp-widget-container-${Date.now()}`); 
 
 
@@ -40,6 +41,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      // Step 1: Call your backend to initiate the OTP session with MSG91 and get tokenAuth
       const sessionResponse = await fetch("/api/auth/initiate-otp-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,27 +51,39 @@ export default function LoginPage() {
       const sessionData = await sessionResponse.json();
 
       if (!sessionResponse.ok || !sessionData.tokenAuth) {
-        throw new Error(sessionData.error || "Failed to initiate OTP session.");
+        throw new Error(sessionData.error || "Failed to initiate OTP session with server.");
+      }
+      
+      // Ensure WIDGET_ID is available
+      const widgetId = process.env.NEXT_PUBLIC_MSG91_WIDGET_ID;
+      if (!widgetId) {
+        console.error("NEXT_PUBLIC_MSG91_WIDGET_ID is not defined in environment variables.");
+        throw new Error("OTP Widget configuration error on client-side.");
       }
 
+      // Step 2: Configure and initialize the MSG91 OTP Widget
       const configuration = {
-        widgetId: process.env.NEXT_PUBLIC_MSG91_WIDGET_ID || "YOUR_DEFAULT_WIDGET_ID", // Get from env, provide a fallback if needed
-        tokenAuth: sessionData.tokenAuth, 
-        identifier: phoneNumber, 
-        target: `#${otpWidgetContainerId}`, // Specify the target div for the widget
-        exposeMethods: true, 
-        success: async (data: any) => {
+        widgetId: widgetId,
+        tokenAuth: sessionData.tokenAuth, // This token comes from your backend after it talks to MSG91
+        identifier: phoneNumber, // The phone number for which OTP is being sent
+        target: `#${otpWidgetContainerId}`, // DOM element to render widget (if it doesn't auto-popup)
+        exposeMethods: true, // As per your snippet
+        success: async (data: any) => { // data contains verified token from MSG91
           console.log("OTP verification success (from widget):", data);
-          setIsLoading(true);
+          setIsLoading(true); // Show loading for final login step
+          setError(null);
           try {
+            // Step 3: Send verification data to your backend to finalize login
             const loginResponse = await fetch("/api/auth/finalize-login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              // IMPORTANT: 'data' here is what MSG91 widget's success callback provides.
+              // Ensure it matches what your /api/auth/finalize-login endpoint expects in 'verificationData'.
               body: JSON.stringify({ phoneNumber, verificationData: data }),
             });
             const loginResult = await loginResponse.json();
             if (!loginResponse.ok) {
-              throw new Error(loginResult.error || "Login finalization failed.");
+              throw new Error(loginResult.error || "Login finalization failed on server.");
             }
             toast({ title: "Login Successful", description: "You have been successfully logged in." });
             router.push("/dashboard");
@@ -78,38 +92,36 @@ export default function LoginPage() {
             toast({ title: "Login Error", description: finalLoginError.message, variant: "destructive" });
           } finally {
             setIsLoading(false);
+            setIsOtpWidgetInitialized(false); // Reset widget state
           }
         },
         failure: (errorData: any) => {
           console.error("OTP verification failure (from widget):", errorData);
           setError(errorData.message || "OTP verification failed. Please try again.");
           toast({ title: "OTP Error", description: errorData.message || "Verification failed.", variant: "destructive" });
-          setIsLoading(false);
-          setIsOtpWidgetInitialized(false); 
+          setIsLoading(false); // Stop loading
+          setIsOtpWidgetInitialized(false); // Reset widget state to allow re-try or phone number change
         },
       };
       
       if (window.initSendOTP) {
         window.initSendOTP(configuration);
-        setIsOtpWidgetInitialized(true); 
+        setIsOtpWidgetInitialized(true); // Set state to show widget or loading for widget
       } else {
-        // It's possible the script hasn't loaded yet, or initSendOTP isn't global immediately.
-        // One strategy is to wait briefly if onLoad from Script component hasn't fired or if initSendOTP isn't ready.
-        // For simplicity here, we assume it should be ready if the script load was successful (handled by Script's onLoad).
-        // If issues persist, one might need a more robust check or event system.
-        console.warn("initSendOTP function not found on window. Ensure the MSG91 script is loaded and initialized correctly.");
-        throw new Error("OTP Widget script not ready.");
+        console.warn("initSendOTP function not found on window. Ensure the MSG91 script is loaded.");
+        throw new Error("OTP Widget script not ready. Please try refreshing.");
       }
 
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
       toast({ title: "Error", description: err.message, variant: "destructive" });
-      setIsLoading(false); 
+      setIsLoading(false); // Stop loading on initial error
     }
+    // setIsLoading(false) // Removed from here; loading is handled within success/failure/catch
   };
   
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
+    const value = e.target.value.replace(/\D/g, ''); // Allow only digits
     if (value.length <= 10) {
       setPhoneNumber(value);
     }
@@ -118,7 +130,7 @@ export default function LoginPage() {
   return (
     <>
       <Script
-        src="https://verify.msg91.com/otp-provider.js" 
+        src="https://verify.msg91.com/otp-provider.js" // Replace with your actual provider's script URL if different
         strategy="lazyOnload" // Load after page content is interactive
         onLoad={() => {
           console.log("MSG91 OTP Provider script loaded successfully.");
@@ -138,7 +150,7 @@ export default function LoginPage() {
             </div>
             <CardTitle className="text-3xl font-bold tracking-tight">Tatya Mitra</CardTitle>
             <CardDescription>
-              {isOtpWidgetInitialized ? "Verifying your phone number..." : "Welcome back! Please enter your phone number to login."}
+              {isOtpWidgetInitialized ? "Verifying your phone number..." : "Welcome! Please enter your phone number to login."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -164,7 +176,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 {error && (
-                  <Alert variant="destructive">
+                  <Alert variant="destructive" className="mt-2">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
@@ -174,23 +186,38 @@ export default function LoginPage() {
                 </Button>
               </form>
             ) : (
+              // This div is where the MSG91 widget should render or manage its UI.
+              // It might be a modal or an inline form.
+              // We provide a placeholder and loading/error states around it.
               <div id={otpWidgetContainerId} className="min-h-[150px] flex flex-col justify-center items-center"> 
-                {/* The MSG91 OTP widget will render here. */}
-                {/* We can add a placeholder or loader while the widget initializes if needed */}
-                {isLoading && !error && <div className="flex justify-center items-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary"/> <span className="ml-2">Processing...</span></div>}
+                {isLoading && !error && (
+                    <div className="flex flex-col justify-center items-center p-4 text-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3"/> 
+                        <span className="text-muted-foreground">Waiting for OTP verification...</span>
+                        <p className="text-xs text-muted-foreground mt-1">The OTP widget should appear shortly or might be a popup.</p>
+                    </div>
+                )}
                 
-                {!isLoading && error && ( // Show error if widget init failed or other errors
+                {!isLoading && error && ( // Show error if widget init failed or other errors occur after init
                    <Alert variant="destructive" className="mt-4 w-full">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
                  {/* Button to change number if widget init fails or user wants to change */}
-                 {!isLoading && (
-                    <Button variant="link" onClick={() => { setIsOtpWidgetInitialized(false); setError(null); setIsLoading(false); }} className="mt-4 text-sm">
-                        Enter a different phone number
-                    </Button>
-                 )}
+                 <Button 
+                    variant="link" 
+                    onClick={() => { 
+                        setIsOtpWidgetInitialized(false); 
+                        setError(null); 
+                        setIsLoading(false); 
+                        // Potentially tell MSG91 widget to close/reset if it has methods for that
+                    }} 
+                    className="mt-4 text-sm"
+                    disabled={isLoading} // Disable if an OTP operation is in progress
+                >
+                    Enter a different phone number
+                </Button>
               </div>
             )}
           </CardContent>
