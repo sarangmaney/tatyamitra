@@ -1,7 +1,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/firebase-admin'; // Uncomment when ready for Firestore
+import { db } from '@/lib/firebase-admin'; // Ensure Firebase Admin is initialized
 import type { FirebaseError } from 'firebase-admin/app'; // For type hinting Firestore errors
 import type admin from 'firebase-admin'; // For Firestore query types
 
@@ -37,7 +37,6 @@ const VendorResponseItemSchema = z.object({
   location: z.object({
     district: z.string(),
     taluka: z.string().optional(),
-    // coordinates: z.object({ lat: z.number(), lon: z.number() }).optional(), // For GeoPoint from Firestore
   }),
   profileImageUri: z.string().url().optional(),
   serviceableRadiusKm: z.number().optional(),
@@ -55,11 +54,8 @@ export async function GET(request: NextRequest) {
     const validatedQuery = VendorQuerySchema.parse(queryParams);
     const { pincode, equipmentCategory, lat, lon, radius } = validatedQuery;
 
-    // --- Start: Real Firestore Data Fetching Logic ---
     if (!db) {
-      // Fallback to mock data if Firestore is not initialized
       console.warn('Firestore not initialized, serving mock data for /api/vendors');
-      // MOCK DATA (original mock data kept for fallback/illustration)
       const mockVendors = [
         {
           vendorId: "vendor_12345xyz",
@@ -117,27 +113,12 @@ export async function GET(request: NextRequest) {
 
     let vendorQuery: admin.firestore.Query = db.collection('vendor');
 
-    // Example: Filtering by pincode (assuming vendor documents have a 'location.pincode' field)
-    // You'll need a composite index on `location.pincode` if it's nested.
-    // For simplicity, let's assume a top-level 'pincode' or 'location.pincode'
-    // if (pincode) {
-    //   query = query.where('location.pincode', '==', pincode); // Adjust field path as per your structure
-    // }
-
-    // Geospatial filtering (lat, lon, radius) is complex with Firestore alone.
-    // It typically requires a third-party solution (e.g., Geofirestore) or client-side filtering
-    // on a broader dataset fetched by district/taluka first, or a backend calculation.
-    // This example will not implement full geospatial querying.
-    // If you implement it, you'd fetch vendors in a broader area and then filter them
-    // by calculating distance from (lat, lon) and checking against 'radius' and 'serviceableRadiusKm'.
-
     const vendorSnapshots = await vendorQuery.get();
     const vendorsDataFromDb: VendorResponseItem[] = [];
 
     for (const vendorDoc of vendorSnapshots.docs) {
       const vendorData = vendorDoc.data();
       
-      // Fetch equipment for this vendor
       let equipmentQuery: admin.firestore.Query = db.collection('vendor').doc(vendorDoc.id).collection('VendorEquipments');
       if (equipmentCategory) {
         equipmentQuery = equipmentQuery.where('category', '==', equipmentCategory);
@@ -157,12 +138,10 @@ export async function GET(request: NextRequest) {
           tankSize: eqData.tankSize,
           acresCapacityPerDay: eqData.acresCapacityPerDay,
           primaryImageUrl: eqData.images && eqData.images.length > 0 ? eqData.images[0] : `https://placehold.co/600x400.png`,
-          status: eqData.availability || 'unavailable', // Ensure 'availability' maps to 'status' enum
+          status: eqData.availability || 'unavailable',
         };
       });
 
-      // Only include vendor if they have matching equipment (if category was specified)
-      // or if no category was specified (meaning we want all vendors and their equipment)
       if (!equipmentCategory || (equipmentCategory && equipmentsList.length > 0)) {
         vendorsDataFromDb.push({
           vendorId: vendorDoc.id,
@@ -170,8 +149,6 @@ export async function GET(request: NextRequest) {
           location: {
             district: vendorData.location?.district || 'Unknown District',
             taluka: vendorData.location?.taluka,
-            // If you store GeoPoint:
-            // coordinates: vendorData.location?.coordinates ? { lat: vendorData.location.coordinates.latitude, lon: vendorData.location.coordinates.longitude } : undefined,
           },
           profileImageUri: vendorData.profileImageUri || 'https://placehold.co/100x100.png',
           serviceableRadiusKm: vendorData.serviceableRadius,
@@ -179,15 +156,12 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-    // --- End: Real Firestore Data Fetching Logic ---
 
     const response = VendorListResponseSchema.parse(vendorsDataFromDb);
     return NextResponse.json(response);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // This error is for when your *response data* doesn't match your Zod schema.
-      // Or when query params are invalid.
       console.error("Zod Validation Error (API /api/vendors):", error.issues);
       return NextResponse.json({ error: 'Invalid data structure or query parameters', details: error.issues }, { status: 400 });
     }

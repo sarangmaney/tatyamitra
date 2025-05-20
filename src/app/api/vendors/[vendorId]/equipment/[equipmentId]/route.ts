@@ -1,7 +1,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/firebase-admin'; // Uncomment when ready for Firestore
+import { db } from '@/lib/firebase-admin'; // Ensure Firebase Admin is initialized
 import type { FirebaseError } from 'firebase-admin/app'; // For type hinting Firestore errors
 
 // Define Zod schema for the detailed equipment response
@@ -20,15 +20,12 @@ const DetailedEquipmentSchema = z.object({
   pricePerAcre: z.number().optional(),
   pricePerDay: z.number().optional(),
   pricePerHour: z.number().optional(),
-  // offDays: z.array(z.string()).optional().describe("Array of YYYY-MM-DD strings when equipment is off"),
-  // availableDays: z.array(z.string()).optional().describe("Array of specific available dates or recurring day names"),
-  availabilityStatus: z.enum(["available", "unavailable", "maintenance"]), // Your Firestore 'availability' field
+  availabilityStatus: z.enum(["available", "unavailable", "maintenance"]),
   batteriesAvailable: z.number().optional(),
   rating: z.number().min(0).max(5).optional(), // Corrected: .min().max() before .optional()
-  // reviews: z.array(z.object({ rating: z.number(), comment: z.string() })).optional(), // Or link to reviews API
   images: z.array(z.string().url()).optional().describe("Array of image URLs"),
   videoUrl: z.string().url().optional(),
-  location: z.object({ // Equipment specific location if different from vendor
+  location: z.object({
     lat: z.number(),
     lon: z.number(),
     address: z.string().optional(),
@@ -47,11 +44,8 @@ export async function GET(
       return NextResponse.json({ error: 'Vendor ID and Equipment ID are required' }, { status: 400 });
     }
 
-    // --- Start: Real Firestore Data Fetching Logic ---
     if (!db) {
-      // Fallback to mock data if Firestore is not initialized
       console.warn(`Firestore not initialized, serving mock data for /api/vendors/${vendorId}/equipment/${equipmentId}`);
-      // MOCK DATA (original mock data kept for fallback/illustration)
       if (vendorId === "vendor_12345xyz" && equipmentId === "drone_abc_789") {
         const mockEquipmentDetail: z.infer<typeof DetailedEquipmentSchema> = {
           equipmentId: "drone_abc_789",
@@ -87,13 +81,12 @@ export async function GET(
     if (!equipmentDoc.exists) {
       return NextResponse.json({ error: 'Equipment not found' }, { status: 404 });
     }
-    const equipmentData = equipmentDoc.data(); // Cast to your Firestore equipment type if defined
+    const equipmentData = equipmentDoc.data();
     
     if (!equipmentData) {
         return NextResponse.json({ error: 'Equipment data is missing' }, { status: 404 });
     }
 
-    // Fetch vendor data for vendorName
     let vendorName;
     const vendorDoc = await db.collection('vendor').doc(vendorId).get();
     if (vendorDoc.exists) {
@@ -109,32 +102,30 @@ export async function GET(
       model: equipmentData.model || 'Unknown Model',
       category: equipmentData.category || 'Unknown Category',
       specifications: equipmentData.specifications,
-      features: equipmentData.feature, // Your Firestore 'feature' map
+      features: equipmentData.feature,
       tankSize: equipmentData.tankSize,
       acresCapacityPerDay: equipmentData.acresCapacityPerDay,
       pricePerAcre: equipmentData.pricePerAcre,
       pricePerDay: equipmentData.pricePerDay,
       pricePerHour: equipmentData.pricePerHour,
-      availabilityStatus: equipmentData.availability || 'unavailable', // Ensure 'availability' maps to enum
+      availabilityStatus: equipmentData.availability || 'unavailable',
       batteriesAvailable: equipmentData.batteriesAvailable,
       rating: equipmentData.rating,
-      images: equipmentData.images || [], // Ensure images is an array
+      images: equipmentData.images || [],
       videoUrl: equipmentData.videoUrl,
       yieldIncreaseBenefit: equipmentData.yieldIncreaseBenefit,
       location: equipmentData.Location ? { 
-        lat: equipmentData.Location.latitude, // GeoPoint uses latitude/longitude
+        lat: equipmentData.Location.latitude,
         lon: equipmentData.Location.longitude,
-        address: equipmentData.Location.address // Assuming you store address with GeoPoint
+        address: equipmentData.Location.address
       } : undefined,
     };
-    // --- End: Real Firestore Data Fetching Logic ---
     
     const response = DetailedEquipmentSchema.parse(responseData);
     return NextResponse.json(response);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // This error is for when your *response data* doesn't match your Zod schema.
       console.error(`Zod Validation Error (API /api/vendors/[vendorId]/equipment/[equipmentId]):`, error.issues);
       return NextResponse.json({ error: 'Invalid response data structure', details: error.issues }, { status: 500 });
     }
