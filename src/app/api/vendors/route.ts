@@ -54,6 +54,8 @@ export async function GET(request: NextRequest) {
     const validatedQuery = VendorQuerySchema.parse(queryParams);
     const { pincode, equipmentCategory, lat, lon, radius } = validatedQuery;
 
+    // If Firebase Admin is not initialized (e.g., missing credentials), db will be null.
+    // Fallback to mock data if db is not available.
     if (!db) {
       console.warn('Firestore not initialized, serving mock data for /api/vendors');
       const mockVendors = [
@@ -111,7 +113,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(parsedMockResponse);
     }
 
+    // Real Firestore logic
     let vendorQuery: admin.firestore.Query = db.collection('vendor');
+
+    // Basic filtering example (more complex filtering like by pincode directly on nested location
+    // or geospatial queries might require different data structures or Cloud Functions)
+    if (pincode) {
+      // This is a simplified example; direct pincode query on a nested map might not be efficient.
+      // You might have a top-level 'pincodes' collection or denormalize pincode.
+      // For now, this will query all vendors and filter client-side if not indexed, which is not ideal for large datasets.
+      // vendorQuery = vendorQuery.where('location.pincode', '==', pincode); // Example if pincode was directly under location
+    }
+    // Note: Radius-based filtering (lat, lon, radius) is complex with Firestore alone and usually requires
+    // server-side calculation (e.g., in a Cloud Function) or a specialized geo-query service.
 
     const vendorSnapshots = await vendorQuery.get();
     const vendorsDataFromDb: VendorResponseItem[] = [];
@@ -119,6 +133,12 @@ export async function GET(request: NextRequest) {
     for (const vendorDoc of vendorSnapshots.docs) {
       const vendorData = vendorDoc.data();
       
+      // Example: If pincode filtering is done post-fetch (not recommended for large scale)
+      if (pincode && vendorData.pincode !== pincode && vendorData.location?.pincode !== pincode) {
+         // Simple check, adjust based on your actual structure (e.g. vendorData.pincode or vendorData.location.pincode)
+        continue;
+      }
+
       let equipmentQuery: admin.firestore.Query = db.collection('vendor').doc(vendorDoc.id).collection('VendorEquipments');
       if (equipmentCategory) {
         equipmentQuery = equipmentQuery.where('category', '==', equipmentCategory);
@@ -142,13 +162,14 @@ export async function GET(request: NextRequest) {
         };
       });
 
+      // Only add vendor if they have matching equipment (if category is specified) or if no category filter.
       if (!equipmentCategory || (equipmentCategory && equipmentsList.length > 0)) {
         vendorsDataFromDb.push({
           vendorId: vendorDoc.id,
           vendorName: vendorData.vendorName || 'Unknown Vendor',
           location: {
-            district: vendorData.location?.district || 'Unknown District',
-            taluka: vendorData.location?.taluka,
+            district: vendorData.district || vendorData.location?.district || 'Unknown District', // Check top level then nested
+            taluka: vendorData.taluka || vendorData.location?.taluka,
           },
           profileImageUri: vendorData.profileImageUri || 'https://placehold.co/100x100.png',
           serviceableRadiusKm: vendorData.serviceableRadius,
@@ -157,8 +178,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const response = VendorListResponseSchema.parse(vendorsDataFromDb);
-    return NextResponse.json(response);
+    const parsedResponse = VendorListResponseSchema.parse(vendorsDataFromDb);
+    return NextResponse.json(parsedResponse);
 
   } catch (error) {
     if (error instanceof z.ZodError) {

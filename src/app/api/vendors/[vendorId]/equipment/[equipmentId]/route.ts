@@ -44,10 +44,13 @@ export async function GET(
       return NextResponse.json({ error: 'Vendor ID and Equipment ID are required' }, { status: 400 });
     }
 
+    // If Firebase Admin is not initialized (e.g., missing credentials), db will be null.
+    // Fallback to mock data if db is not available.
     if (!db) {
       console.warn(`Firestore not initialized, serving mock data for /api/vendors/${vendorId}/equipment/${equipmentId}`);
+      // Mock data logic (as previously defined)
       if (vendorId === "vendor_12345xyz" && equipmentId === "drone_abc_789") {
-        const mockEquipmentDetail: z.infer<typeof DetailedEquipmentSchema> = {
+        const mockEquipmentDetail = {
           equipmentId: "drone_abc_789",
           vendorId: "vendor_12345xyz",
           vendorName: "Samadhan Patil Krishi Seva Kendra",
@@ -60,7 +63,7 @@ export async function GET(
           tankSize: "10L",
           acresCapacityPerDay: 100,
           pricePerAcre: 480,
-          availabilityStatus: "available",
+          availabilityStatus: "available" as const,
           batteriesAvailable: 4,
           rating: 4.3,
           images: ["https://placehold.co/600x400.png", "https://placehold.co/600x400.png"],
@@ -74,6 +77,7 @@ export async function GET(
       return NextResponse.json({ error: 'Equipment not found in mock data' }, { status: 404 });
     }
 
+    // Real Firestore logic
     const equipmentDocRef = db.collection('vendor').doc(vendorId)
                                 .collection('VendorEquipments').doc(equipmentId);
     const equipmentDoc = await equipmentDocRef.get();
@@ -93,7 +97,7 @@ export async function GET(
       vendorName = vendorDoc.data()?.vendorName;
     }
     
-    const responseData: z.infer<typeof DetailedEquipmentSchema> = {
+    const responseData = {
       equipmentId: equipmentDoc.id,
       vendorId: vendorId,
       vendorName: vendorName || 'Unknown Vendor',
@@ -102,7 +106,7 @@ export async function GET(
       model: equipmentData.model || 'Unknown Model',
       category: equipmentData.category || 'Unknown Category',
       specifications: equipmentData.specifications,
-      features: equipmentData.feature,
+      features: equipmentData.feature, // Ensure 'feature' is the correct field name in Firestore
       tankSize: equipmentData.tankSize,
       acresCapacityPerDay: equipmentData.acresCapacityPerDay,
       pricePerAcre: equipmentData.pricePerAcre,
@@ -115,14 +119,14 @@ export async function GET(
       videoUrl: equipmentData.videoUrl,
       yieldIncreaseBenefit: equipmentData.yieldIncreaseBenefit,
       location: equipmentData.Location ? { 
-        lat: equipmentData.Location.latitude,
+        lat: equipmentData.Location.latitude, // Assuming Firestore GeoPoint stores as latitude/longitude
         lon: equipmentData.Location.longitude,
         address: equipmentData.Location.address
       } : undefined,
     };
     
-    const response = DetailedEquipmentSchema.parse(responseData);
-    return NextResponse.json(response);
+    const parsedResponse = DetailedEquipmentSchema.parse(responseData);
+    return NextResponse.json(parsedResponse);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
