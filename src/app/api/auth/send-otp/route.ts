@@ -17,13 +17,45 @@ const SendOtpSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits."),
 });
 
-// Simulated list of pre-registered users for demo context (e.g., admin, early users)
-// This list is NO LONGER a hard gate for sending OTPs.
-const preRegisteredUsers: Record<string, { name: string }> = {
+// This list is no longer a hard gate for sending OTPs but can be used for context.
+const preRegisteredUsersForContext: Record<string, { name: string }> = {
   "1234567890": { name: "Demo User One" },
   "0987654321": { name: "Demo User Two" },
   "9595597583": { name: "Previously Added User" },
 };
+
+// Helper function to generate a random 6-digit OTP
+function generateOtp(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Placeholder function for actual SMS sending
+async function sendSmsViaProvider(phoneNumber: string, otp: string): Promise<{success: boolean, messageId?: string, error?: string}> {
+  // This is where you would integrate with your chosen SMS provider (e.g., Twilio, Vonage, AWS SNS, MSG91)
+  // 1. Install their SDK (e.g., npm install twilio)
+  // 2. Configure with API keys/credentials (use environment variables)
+  // 3. Construct the message (e.g., `Your OTP for Tatya Mitra is ${otp}`)
+  // 4. Make the API call to send the SMS
+  // Example (conceptual, not runnable without a provider):
+  // const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  // try {
+  //   const message = await client.messages.create({
+  //     body: `Your Tatya Mitra OTP is: ${otp}`,
+  //     from: process.env.TWILIO_PHONE_NUMBER, // Your Twilio phone number
+  //     to: `+91${phoneNumber}` // Ensure country code formatting
+  //   });
+  //   console.log("SMS sent successfully, SID:", message.sid);
+  //   return { success: true, messageId: message.sid };
+  // } catch (error: any) {
+  //   console.error("Failed to send SMS:", error.message);
+  //   return { success: false, error: error.message };
+  // }
+
+  console.log(`SIMULATING SMS: Sending OTP ${otp} to ${phoneNumber}`);
+  // For now, always return success in simulation
+  return { success: true };
+}
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,15 +68,13 @@ export async function POST(request: NextRequest) {
 
     const { phoneNumber } = validationResult.data;
 
-    // Simulate checking if user exists for logging/context, but don't block.
-    if (preRegisteredUsers[phoneNumber]) {
-      console.log(`Phone number +91 ${phoneNumber} is in the pre-registered list.`);
+    if (preRegisteredUsersForContext[phoneNumber]) {
+      console.log(`Phone number +91 ${phoneNumber} is in the pre-registered context list.`);
     } else {
-      console.log(`Phone number +91 ${phoneNumber} is not in the pre-registered list. Proceeding with OTP generation (simulating a new user who just signed up).`);
+      console.log(`Phone number +91 ${phoneNumber} is not in the pre-registered context list. Proceeding with OTP generation for any valid number.`);
     }
 
-    // Simulate OTP generation (fixed for demo)
-    const generatedOtp = "123456"; 
+    const generatedOtp = generateOtp();
     
     // Store OTP (in-memory, basic)
     otpStore[phoneNumber] = {
@@ -54,11 +84,24 @@ export async function POST(request: NextRequest) {
     };
     console.log(`OTP for ${phoneNumber}: ${generatedOtp} (Stored: ${JSON.stringify(otpStore[phoneNumber])})`);
 
+    // Attempt to send SMS via provider
+    // In a real scenario, you might not return the OTP in the response if SMS sending is reliable.
+    // For this demo, we proceed even if simulated SMS sending had an issue.
+    const smsResult = await sendSmsViaProvider(phoneNumber, generatedOtp);
 
-    // Simulate sending OTP (in a real app, you'd use an SMS gateway)
-    // For now, we just log it and return success.
+    if (!smsResult.success) {
+      // Potentially handle SMS failure, but for now, we'll still allow login with the known OTP for demo purposes
+      console.warn(`Failed to send SMS to ${phoneNumber}. Error: ${smsResult.error}. User can still proceed with OTP ${generatedOtp} for testing.`);
+       // You might return an error here in a production app if SMS is critical
+      // return NextResponse.json({ error: "Failed to send OTP via SMS. Please try again." }, { status: 500 });
+    }
     
-    return NextResponse.json({ message: `OTP sent to +91 ${phoneNumber} (simulated). OTP is ${generatedOtp} for testing.` }, { status: 200 });
+    // For development/testing, it's helpful to return the OTP in the response.
+    // In production, if SMS sending is live, you would NOT return the OTP here.
+    return NextResponse.json({ 
+      message: `OTP generated for +91 ${phoneNumber}. If SMS sending were live, it would be sent. For testing, OTP is ${generatedOtp}.`,
+      otpForTesting: generatedOtp // Remove this line in production
+    }, { status: 200 });
 
   } catch (error: any) {
     console.error("Send OTP error:", error);
@@ -76,6 +119,6 @@ if (typeof global !== 'undefined') {
   } else {
     // If it exists, merge (though simple assignment is fine for this basic store)
     // @ts-ignore
-    Object.assign(global.otpStoreFromSendOtp, otpStore);
+    Object.assign(global.otpStoreFromSendOtp, otpStore[phoneNumber]); // Ensure only the current phone number's OTP is assigned
   }
 }
