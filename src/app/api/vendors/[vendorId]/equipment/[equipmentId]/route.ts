@@ -1,7 +1,6 @@
 
 // ================================================================================================
 // CRITICAL DEPLOYMENT CHECK:
-// If you are seeing build errors related to Zod or "TypeError: d.z.number(...).optional(...).min is not a function",
 // 1. ENSURE THIS FILE AND /api/vendors/route.ts HAVE THE CORRECTED ZOD SCHEMA:
 //    e.g., rating: z.number().min(0).max(5).optional() (min/max BEFORE optional).
 // 2. ENSURE THESE CHANGES ARE COMMITTED AND PUSHED TO YOUR GIT REPOSITORY.
@@ -74,7 +73,7 @@ export async function GET(
           pricePerAcre: 480,
           availabilityStatus: "available" as const,
           batteriesAvailable: 4,
-          rating: 4.3, // Example rating
+          rating: 4.3,
           images: ["https://placehold.co/600x400.png", "https://placehold.co/600x400.png"],
           videoUrl: "https://www.youtube.com/watch?v=examplevideo_drone",
           yieldIncreaseBenefit: "Precise application reduces chemical wastage and ensures even coverage, enhancing crop health and yield by up to 15%.",
@@ -130,7 +129,7 @@ export async function GET(
       location: equipmentData.Location instanceof GeoPoint ? { 
         lat: equipmentData.Location.latitude,
         lon: equipmentData.Location.longitude,
-        address: equipmentData.Location.address // Assuming address is stored alongside GeoPoint, otherwise fetch separately
+        address: equipmentData.Location.address 
       } : (equipmentData.Location && typeof equipmentData.Location.latitude === 'number' && typeof equipmentData.Location.longitude === 'number' ? {
         lat: equipmentData.Location.latitude,
         lon: equipmentData.Location.longitude,
@@ -155,4 +154,3 @@ export async function GET(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-

@@ -1,7 +1,6 @@
 
 // ================================================================================================
 // CRITICAL DEPLOYMENT CHECK:
-// If you are seeing build errors related to Zod or "TypeError: d.z.number(...).optional(...).min is not a function",
 // 1. ENSURE THIS FILE AND /api/vendors/[vendorId]/equipment/[equipmentId]/route.ts HAVE THE CORRECTED ZOD SCHEMA:
 //    e.g., rating: z.number().min(0).max(5).optional() (min/max BEFORE optional).
 // 2. ENSURE THESE CHANGES ARE COMMITTED AND PUSHED TO YOUR GIT REPOSITORY.
@@ -125,21 +124,12 @@ export async function GET(request: NextRequest) {
     // Real Firestore logic
     let vendorQuery: admin.firestore.Query = db.collection('vendor');
 
-    // Basic pincode filtering (assumes 'pincode' field exists at the top level of vendor docs)
-    // For production, ensure 'pincode' is indexed in Firestore if used frequently.
-    // if (pincode) {
-    //   vendorQuery = vendorQuery.where('pincode', '==', pincode);
-    // }
-    // Note: Radius-based filtering (lat, lon, radius) is complex with Firestore alone and usually requires
-    // server-side calculation or a geospatial database/service. This example doesn't implement it.
-
     const vendorSnapshots = await vendorQuery.get();
     const vendorsDataFromDb: VendorResponseItem[] = [];
 
     for (const vendorDoc of vendorSnapshots.docs) {
       const vendorData = vendorDoc.data();
       
-      // If pincode filter is active and vendor doesn't match, skip
       if (pincode && vendorData.pincode !== pincode && vendorData.location?.pincode !== pincode) {
         continue;
       }
@@ -163,11 +153,10 @@ export async function GET(request: NextRequest) {
           tankSize: eqData.tankSize,
           acresCapacityPerDay: eqData.acresCapacityPerDay,
           primaryImageUrl: eqData.images && eqData.images.length > 0 ? eqData.images[0] : `https://placehold.co/600x400.png`,
-          status: eqData.availability || 'unavailable', // Ensure your Firestore field is 'availability'
+          status: eqData.availability || 'unavailable', 
         };
       });
 
-      // Only include vendor if no equipmentCategory filter OR if they have matching equipment
       if (!equipmentCategory || (equipmentCategory && equipmentsList.length > 0)) {
         vendorsDataFromDb.push({
           vendorId: vendorDoc.id,
@@ -177,7 +166,7 @@ export async function GET(request: NextRequest) {
             taluka: vendorData.taluka || vendorData.location?.taluka,
           },
           profileImageUri: vendorData.profileImageUri || 'https://placehold.co/100x100.png',
-          serviceableRadiusKm: vendorData.serviceableRadius, // Ensure field name matches Firestore
+          serviceableRadiusKm: vendorData.serviceableRadius,
           equipments: equipmentsList.length > 0 ? equipmentsList : undefined,
         });
       }
