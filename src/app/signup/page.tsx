@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,15 +10,37 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo } from "@/components/icons";
 import { useRouter } from "next/navigation";
+import { Alert, AlertDescription } from "@/components/ui/alert"; // Added Alert
+import { AlertCircle } from "lucide-react"; // Added AlertCircle
+
+// Mock database of existing phone numbers
+const existingPhoneNumbers = ["9876543210", "1234567890"];
 
 export default function SignupPage() {
   const router = useRouter();
+  const [phoneNumber, setPhoneNumber] = React.useState("");
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setPhoneError(null); // Reset error on new submission
+
+    // Basic validation for 10 digits (you can enhance this)
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      setPhoneError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    // Simulate checking if the number already exists in the database
+    if (existingPhoneNumbers.includes(phoneNumber)) {
+      setPhoneError("This phone number is already registered. Please log in instead.");
+      return;
+    }
+
     // In a real app, user would be created and OTP sent.
     // For now, simulate successful signup and redirect to KYC or login.
-    router.push("/kyc"); 
+    console.log("Simulating signup for new number:", phoneNumber);
+    router.push("/kyc");
   };
 
   return (
@@ -36,10 +59,32 @@ export default function SignupPage() {
               <Label htmlFor="fullName">Full Name</Label>
               <Input id="fullName" type="text" placeholder="Enter your full name" required />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="Enter your phone number" required />
+              <div className="flex items-center">
+                <span className="flex h-10 items-center justify-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                  +91
+                </span>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your 10-digit number"
+                  required
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="rounded-l-none"
+                  maxLength={10}
+                />
+              </div>
+              {phoneError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{phoneError}</AlertDescription>
+                </Alert>
+              )}
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="role">I am a...</Label>
               <Select required>
