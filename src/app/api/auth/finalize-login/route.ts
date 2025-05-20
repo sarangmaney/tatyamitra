@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       // 1. Look up the user by phoneNumber in your database.
       // 2. If found, create a session token (e.g., JWT).
       // 3. Return the session token to the client.
-      console.log(`Login finalized successfully for ${phoneNumber}.`);
+      console.log(`Login finalized successfully for ${phoneNumber}. Session created (simulated).`);
       return NextResponse.json({ message: "Login successful. Session created (simulated)." }, { status: 200 });
     } else {
       console.warn(`Login finalization failed for ${phoneNumber}.`);
