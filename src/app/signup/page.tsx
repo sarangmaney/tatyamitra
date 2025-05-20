@@ -38,9 +38,9 @@ export default function SignupPage() {
     }
 
     // In a real app, user would be created and OTP sent.
-    // For now, simulate successful signup and redirect to KYC or login.
+    // For now, simulate successful signup and redirect.
     console.log("Simulating signup for new number:", phoneNumber);
-    router.push("/kyc");
+    router.push("/onboarding/equipment-registration"); // Changed redirection here
   };
 
   return (
