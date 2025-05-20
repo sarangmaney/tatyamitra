@@ -36,7 +36,7 @@ const initialFormData = {
   category: 'Spraying Drone', // Default category
   tankSize: '',
   batteriesAvailable: 0,
-  equipmentImages: [], // Will store preview URLs or actual uploaded URLs
+  equipmentImages: [] as string[], // Will store preview URLs or actual uploaded URLs
   feature: {
     Speed: '', // Note: Consider consistent casing e.g., speed
     tankCleaner: 'No', // Default to No, can be 'Yes'
@@ -47,23 +47,25 @@ const initialFormData = {
   unit: 'Per Acre', // Default unit
   // Service details
   travelMode: 'Own Vehicle', // Default
-  availableDays: [],
+  availableDays: [] as string[],
   preferredTime: '',
   servicesExpected: 'All of the above', // Default
   vendorId: '', // Will be set after vendor creation or use a UUID
 };
 
+type FormData = typeof initialFormData;
+
 export function VendorEquipmentForm() {
   const [step, setStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
   const { toast } = useToast();
 
-  const updateField = (field, value) => {
+  const updateField = (field: keyof FormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateNested = (section, key, value) => {
+  const updateNested = (section: 'location' | 'feature', key: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [section]: { ...prev[section], [key]: value },
@@ -88,18 +90,18 @@ export function VendorEquipmentForm() {
     }
   };
   
-  const handleFileChange = (event, fieldName, isMultiple = false) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, fieldName: 'profileImageUri' | 'equipmentImages', isMultiple = false) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       if (isMultiple) {
         const fileUrls = Array.from(files).map(file => URL.createObjectURL(file));
         // In a real app, you'd upload these files and store their storage URLs.
         // For now, storing preview URLs. You might want to manage File objects for upload.
-        updateField(fieldName, fileUrls); 
+        updateField(fieldName, fileUrls as any); 
       } else {
         // For single file (profile image)
         const fileUrl = URL.createObjectURL(files[0]);
-        updateField(fieldName, fileUrl);
+        updateField(fieldName, fileUrl as any);
       }
     }
   };
@@ -113,17 +115,16 @@ export function VendorEquipmentForm() {
         return;
       }
     }
-    // Drone capacity validation for step 3 (moving to it)
-    if (step === 2) { // When moving from step 2 to 3
-      // This validation should happen when we have acresCapacityPerDay, which is on step 3
-      // So, this specific validation is better placed before submitting step 3, or in handleSubmit
+    // Drone capacity validation when moving from step 2 to 3
+    if (step === 2) { 
+      // No specific validation here, moved to handleSubmit for final check
     }
     setStep((prev) => Math.min(prev + 1, 3));
   };
 
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
-  const StepCircle = ({ number, currentStep }) => (
+  const StepCircle = ({ number, currentStep }: { number: number; currentStep: number }) => (
     <div className="flex items-center">
       <div
         className={`w-10 h-10 flex items-center justify-center rounded-full border-2 font-bold transition-all
@@ -140,8 +141,8 @@ export function VendorEquipmentForm() {
   const handleSubmit = async () => {
     // Drone capacity validation
     if (formData.category === 'Spraying Drone' && formData.acresCapacityPerDay > 0) {
-        const timePerDayHours = formData.preferredTime === 'Morning' ? 3 : formData.preferredTime === 'Evening' ? 3 : 6; // Assuming 6 if not specified or "Both"
-        const maxAcres = 5 * timePerDayHours; // 5 acres per hour
+        const timePerDayHours = formData.preferredTime === 'Morning' ? 3 : formData.preferredTime === 'Evening' ? 3 : (formData.preferredTime === 'Both' ? 6 : 6) ; // Default to 6 if "Any Time" or "Both"
+        const maxAcres = 5 * timePerDayHours; 
         if (formData.acresCapacityPerDay > maxAcres) {
           toast({
             variant: 'destructive',
@@ -153,7 +154,7 @@ export function VendorEquipmentForm() {
     }
 
     const calculatedPricePerDay = formData.acresCapacityPerDay * formData.pricePerAcre;
-    const finalFormData = {
+    const finalFormData: FormData = {
       ...formData,
       pricePerDay: calculatedPricePerDay,
       vendorId: 'vendor_' + Date.now(), // Temporary ID generation
@@ -166,13 +167,13 @@ export function VendorEquipmentForm() {
     // --- TODO: Firebase Submission Logic ---
     // try {
     //   // 1. Create Vendor Document
-    //   const vendorData = {
+    //   const vendorDataToSubmit = {
     //     ownerName: finalFormData.ownerName,
     //     vendorName: finalFormData.vendorName,
     //     location: {
     //       district: finalFormData.location.district,
     //       taluka: finalFormData.location.taluka,
-    //       coordinates: new GeoPoint(parseFloat(finalFormData.location.lat) || 0, parseFloat(finalFormData.location.long) || 0),
+    //       // coordinates: new GeoPoint(parseFloat(finalFormData.location.lat) || 0, parseFloat(finalFormData.location.long) || 0), // If lat/long are guaranteed
     //       pincode: finalFormData.pincode,
     //     },
     //     // profileImageUri: "URL after upload", // Actual URL from Firebase Storage
@@ -182,31 +183,32 @@ export function VendorEquipmentForm() {
     //     kyc: finalFormData.kyc,
     //     // Add other vendor specific fields from finalFormData if any
     //   };
-    //   const vendorRef = await addDoc(collection(db, "vendor"), vendorData);
-    //   const newVendorId = vendorRef.id;
+    //   // if (finalFormData.location.lat && finalFormData.location.long) { // Add coordinates only if available
+    //   //   (vendorDataToSubmit.location as any).coordinates = new GeoPoint(parseFloat(finalFormData.location.lat), parseFloat(finalFormData.location.long));
+    //   // }
+    //   // const vendorRef = await addDoc(collection(db, "vendor"), vendorDataToSubmit);
+    //   // const newVendorId = vendorRef.id;
 
     //   // 2. Create Equipment Document in Subcollection
-    //   const equipmentData = {
-    //     vendorId: newVendorId, // Link to the vendor
-    //     brand: finalFormData.brand,
-    //     model: finalFormData.model,
-    //     category: finalFormData.category,
-    //     tankSize: finalFormData.tankSize,
-    //     batteriesAvailable: finalFormData.batteriesAvailable,
-    //     // images: ["URL(s) after upload"], // Actual URLs from Firebase Storage
-    //     feature: finalFormData.feature,
-    //     acresCapacityPerDay: finalFormData.acresCapacityPerDay,
-    //     pricePerAcre: finalFormData.pricePerAcre,
-    //     pricePerDay: finalFormData.pricePerDay, // Calculated
-    //     unit: finalFormData.unit,
-    //     travelMode: finalFormData.travelMode,
-    //     availableDays: finalFormData.availableDays,
-    //     preferredTime: finalFormData.preferredTime,
-    //     // servicesExpected: finalFormData.servicesExpected, // This seems like metadata for Qasper
-    //     // Add other equipment specific fields from finalFormData
-    //     createdAt: serverTimestamp(),
-    //   };
-    //   await addDoc(collection(db, "vendor", newVendorId, "VendorEquipments"), equipmentData);
+    //   // const equipmentDataToSubmit = {
+    //   //   vendorId: newVendorId, // Link to the vendor
+    //   //   brand: finalFormData.brand,
+    //   //   model: finalFormData.model,
+    //   //   category: finalFormData.category,
+    //   //   tankSize: finalFormData.tankSize,
+    //   //   batteriesAvailable: finalFormData.batteriesAvailable,
+    //   //   // images: ["URL(s) after upload"], // Actual URLs from Firebase Storage
+    //   //   feature: finalFormData.feature,
+    //   //   acresCapacityPerDay: finalFormData.acresCapacityPerDay,
+    //   //   pricePerAcre: finalFormData.pricePerAcre,
+    //   //   pricePerDay: finalFormData.pricePerDay, // Calculated
+    //   //   unit: finalFormData.unit,
+    //   //   travelMode: finalFormData.travelMode,
+    //   //   availableDays: finalFormData.availableDays,
+    //   //   preferredTime: finalFormData.preferredTime,
+    //   //   createdAt: serverTimestamp(),
+    //   // };
+    //   // await addDoc(collection(db, "vendor", newVendorId, "VendorEquipments"), equipmentDataToSubmit);
 
     //   toast({ title: 'Registration Successful!', description: 'Your information has been submitted.'});
     //   setShowSuccess(true);
@@ -217,6 +219,7 @@ export function VendorEquipmentForm() {
     // --- End of Firebase Submission Logic Placeholder ---
     
     // For now, just show success without Firebase
+    toast({ title: 'Registration Submitted (Simulated)!', description: 'Your information would be sent to the server here.'});
     setShowSuccess(true);
   };
 
@@ -282,8 +285,11 @@ export function VendorEquipmentForm() {
               </p>
             )}
             <div className="space-y-2">
-              <Label htmlFor="profileImageUri">Upload Profile Photo</Label>
-              <Input id="profileImageUri" type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 'profileImageUri')} />
+              <Label htmlFor="profileImageUriInput">Upload Profile Photo</Label>
+              <div className="flex items-center gap-2">
+                <UploadCloud className="h-6 w-6 text-muted-foreground" />
+                <Input id="profileImageUriInput" type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 'profileImageUri')} className="flex-1" />
+              </div>
               {formData.profileImageUri && <img src={formData.profileImageUri} alt="Profile Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" />}
             </div>
           </>
@@ -333,7 +339,7 @@ export function VendorEquipmentForm() {
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="featureTankCleaner">Tank Cleaner (Drones)</Label>
-                     <Select value={formData.feature.tankCleaner} onValueChange={(value) => updateNested('feature', 'tankCleaner', value)}>
+                     <Select value={formData.feature.tankCleaner} onValueChange={(value) => updateNested('feature', 'tankCleaner', value as string)}>
                         <SelectTrigger id="featureTankCleaner"><SelectValue placeholder="Has tank cleaner?" /></SelectTrigger>
                         <SelectContent>
                         <SelectItem value="Yes">Yes</SelectItem>
@@ -343,8 +349,11 @@ export function VendorEquipmentForm() {
                 </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="equipmentImages">Upload Equipment Photo(s)</Label>
-              <Input id="equipmentImages" type="file" accept="image/*" multiple capture="environment" onChange={(e) => handleFileChange(e, 'equipmentImages', true)} />
+              <Label htmlFor="equipmentImagesInput">Upload Equipment Photo(s)</Label>
+               <div className="flex items-center gap-2">
+                <Camera className="h-6 w-6 text-muted-foreground" />
+                <Input id="equipmentImagesInput" type="file" accept="image/*" multiple capture="environment" onChange={(e) => handleFileChange(e, 'equipmentImages', true)} className="flex-1" />
+              </div>
               {formData.equipmentImages.length > 0 && (
                 <div className="mt-2 flex gap-2 flex-wrap">
                   {formData.equipmentImages.map((src, index) => (
@@ -382,7 +391,6 @@ export function VendorEquipmentForm() {
 
             <div className="space-y-2">
               <Label htmlFor="availableDays">Preferred Days (Can be changed later)</Label>
-              {/* Using checkboxes for multi-select for better UX with ShadCN */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 border rounded-md">
                 {daysOfWeek.map(day => (
                   <div key={day} className="flex items-center space-x-2">
@@ -413,7 +421,7 @@ export function VendorEquipmentForm() {
               <Select value={formData.preferredTime} onValueChange={(value) => updateField('preferredTime', value)}>
                 <SelectTrigger id="preferredTime"><SelectValue placeholder="Select preferred time" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Time</SelectItem>
+                  <SelectItem value="any_time">Any Time</SelectItem>
                   <SelectItem value="Morning">Morning (e.g., 7 AM - 10 AM)</SelectItem>
                   <SelectItem value="Evening">Evening (e.g., 4 PM - 7 PM)</SelectItem>
                   <SelectItem value="Both">Both Morning & Evening</SelectItem>
