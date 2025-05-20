@@ -24,12 +24,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "OTP service client configuration is missing on the server." }, { status: 500 });
     }
     if (!serverAuthKey) {
-        console.error("MSG91_SERVER_AUTH_KEY is not configured in environment variables.");
-        // If AuthenticationFailure is seen, THIS is a very likely cause.
+        console.error("MSG91_SERVER_AUTH_KEY is not configured in environment variables. This is a very likely cause of AuthenticationFailure.");
         return NextResponse.json({ error: "OTP service authentication is missing on the server. Potential cause of AuthenticationFailure." }, { status: 500 });
     }
 
-    console.log(`Attempting to initiate OTP session for ${phoneNumber} using widget ID: ${widgetId}`);
+    console.log(`Attempting to initiate OTP session for ${phoneNumber} using widget ID: ${widgetId} and serverAuthKey (first 5 chars): ${serverAuthKey.substring(0,5)}...`);
 
     // =====================================================================================
     // TODO: ACTUAL CALL TO MSG91 (or your provider's) SERVER-SIDE API TO GET A tokenAuth
@@ -41,14 +40,15 @@ export async function POST(request: NextRequest) {
     // 1. VERIFY `MSG91_SERVER_AUTH_KEY` is correct, active, and whitelisted for your server's IP if IP security is ON for the key.
     // 2. VERIFY `NEXT_PUBLIC_MSG91_WIDGET_ID` is correct for the widget you configured on MSG91.
     // 3. VERIFY the MSG91 API endpoint URL and request body structure below are 100% correct as per MSG91 documentation.
+    //    (The example fetch below is a GUESS and needs to be confirmed with MSG91 docs)
     // 4. CHECK your MSG91 account for any issues (balance, activation status).
     // =====================================================================================
     
-    // Example structure of calling an MSG91 API endpoint (replace with actual endpoint and payload from MSG91 docs)
-    // const MSG91_INITIATE_ENDPOINT = 'https://control.msg91.com/api/v5/SOMETHING_LIKE_INITIATE_WIDGET_SESSION';
+    // Example structure of calling an MSG91 API endpoint (REPLACE WITH ACTUAL FROM MSG91 DOCS)
+    // const MSG91_INITIATE_ENDPOINT = 'https://control.msg91.com/api/v5/SOMETHING_LIKE_INITIATE_WIDGET_SESSION_OR_GET_TOKENAUTH';
     // try {
     //   const providerResponse = await fetch(MSG91_INITIATE_ENDPOINT, {
-    //     method: 'POST',
+    //     method: 'POST', // Or GET, depending on MSG91 docs
     //     headers: {
     //       'Content-Type': 'application/json',
     //       // 'authkey': serverAuthKey, // Some MSG91 APIs take authkey in header, some in body. CHECK DOCS.
@@ -65,25 +65,27 @@ export async function POST(request: NextRequest) {
 
     //   if (!providerResponse.ok) {
     //     // If MSG91 returns an error (like AuthenticationFailure), providerData.message might contain it.
-    //     console.error("Failed to initiate OTP with provider:", providerData);
-    //     throw new Error(providerData.message || "Failed to initiate OTP session with provider.");
+    //     console.error(`Failed to initiate OTP with provider for ${phoneNumber}. Status: ${providerResponse.status}, Response:`, providerData);
+    //     // Return a more specific error if possible
+    //     return NextResponse.json({ error: providerData.message || "Failed to initiate OTP session with provider.", details: providerData }, { status: providerResponse.status });
     //   }
     //   
     //   // IMPORTANT: Check the actual field name for tokenAuth from MSG91's response structure.
-    //   if (!providerData.tokenAuth) { 
+    //   // It might be 'tokenAuth', 'token', 'session_id', etc.
+    //   const tokenAuth = providerData.tokenAuth || providerData.data?.tokenAuth || providerData.data?.token; 
+    //   if (!tokenAuth) { 
     //      console.error("tokenAuth not found in provider response:", providerData);
     //      throw new Error("tokenAuth not received from provider.");
     //   }
-    //   const tokenAuth = providerData.tokenAuth; 
     //   
-    //   console.log(`Successfully initiated OTP with provider. TokenAuth: ${tokenAuth}`);
+    //   console.log(`Successfully initiated OTP with provider. TokenAuth received for ${phoneNumber}.`);
     //   return NextResponse.json({ 
     //     message: `OTP session initiated for +91 ${phoneNumber}. Widget can now be initialized.`,
     //     tokenAuth: tokenAuth 
     //   }, { status: 200 });
 
     // } catch (apiError: any) {
-    //   console.error("Error calling MSG91 API:", apiError);
+    //   console.error(`Error calling MSG91 API for ${phoneNumber}:`, apiError);
     //   return NextResponse.json({ error: apiError.message || "Failed to communicate with OTP provider." }, { status: 500 });
     // }
     // =====================================================================================
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
     // END OF SIMULATED RESPONSE
 
     return NextResponse.json({ 
-      message: `OTP session initiated for +91 ${phoneNumber}. Widget can now be initialized.`,
+      message: `OTP session initiated for +91 ${phoneNumber}. Widget can now be initialized (SIMULATED).`,
       tokenAuth: tokenAuth // This tokenAuth is for the client-side widget
     }, { status: 200 });
 

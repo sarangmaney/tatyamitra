@@ -8,12 +8,13 @@ const FinalizeLoginRequestSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits."),
   verificationData: z.object({
     // Example: if the widget directly returns an object like { token: "...", requestId: "..." }
-    // Common names for the token might be 'token', 'accessToken', or 'requestId'.
+    // Common names for the token might be 'token', 'accessToken', 'requestId', or other specific names from MSG91.
     // This token is what the cURL command refers to as "jwt_token_from_otp_widget".
+    // Check MSG91 widget success callback documentation for the exact field name.
     token: z.string().optional(), 
     requestId: z.string().optional(), 
     // Add other fields if MSG91 provides them and you need them for verification
-  }).or(z.string()), // Allow verificationData to be just the token string itself, if the widget returns that
+  }).or(z.string()).describe("The data object or token string received from the MSG91 widget's success callback."), 
 });
 
 export async function POST(request: NextRequest) {
@@ -39,22 +40,26 @@ export async function POST(request: NextRequest) {
     if (typeof verificationData === 'string') {
         accessToken = verificationData;
     } else if (verificationData && typeof verificationData === 'object') {
-        // Check common keys. PRIORITIZE what MSG91's documentation says for the 'verifyAccessToken' endpoint.
-        // The cURL command uses 'access-token'. The widget success data might provide this as 'token' or 'requestId'.
-        accessToken = verificationData.token || verificationData.requestId; 
+        // Check common keys. PRIORITIZE what MSG91's documentation says for the 'verifyAccessToken' endpoint
+        // and what the widget's success callback actually provides.
+        accessToken = verificationData.token || verificationData.requestId; // Adjust if MSG91 widget uses different field names
     }
 
     if (!accessToken) {
-        console.error("Access token not found in verificationData from widget.", verificationData);
-        return NextResponse.json({ error: "Invalid verification data from OTP widget." }, { status: 400 });
+        console.error("Access token not found in verificationData from widget. Received data:", verificationData);
+        return NextResponse.json({ error: "Invalid verification data from OTP widget. Access token missing." }, { status: 400 });
     }
 
     console.log(`Attempting to finalize login for ${phoneNumber} by verifying access token with MSG91.`);
 
     // =====================================================================================
-    // TODO: VERIFY THIS API CALL STRUCTURE WITH MSG91 DOCUMENTATION
-    // Confirm the endpoint URL, request method, headers, and body structure for "verifying a widget access token".
-    // The cURL example implies 'authkey' and 'access-token' in the body.
+    // VERIFY THIS API CALL STRUCTURE WITH MSG91 DOCUMENTATION FOR 'verifyAccessToken'
+    // 1. Confirm the endpoint URL: Is 'https://control.msg91.com/api/v5/widget/verifyAccessToken' correct?
+    // 2. Confirm Request Method: Is it POST?
+    // 3. Confirm Headers: Is 'Content-Type: application/json' sufficient?
+    // 4. Confirm Body Structure:
+    //    - Does it require 'authkey'?
+    //    - What is the EXACT field name for the token from the widget? The cURL example uses 'access-token'. Ensure this matches.
     // =====================================================================================
     const msg91VerifyUrl = 'https://control.msg91.com/api/v5/widget/verifyAccessToken';
     const verifyResponse = await fetch(msg91VerifyUrl, {
@@ -64,28 +69,29 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         authkey: msg91ServerAuthKey,
-        'access-token': accessToken, // Field name as per cURL example - VERIFY THIS
+        'access-token': accessToken, // VERIFY THIS FIELD NAME with MSG91 docs for this endpoint
+        // Ensure no other required fields are missing for this MSG91 endpoint
       }),
     });
 
     const verifyResult = await verifyResponse.json();
 
     // =====================================================================================
-    // TODO: VERIFY MSG91 SUCCESS/FAILURE RESPONSE STRUCTURE
-    // Check MSG91's API documentation for the exact success/failure response structure for the `verifyAccessToken` endpoint.
-    // The example checks `verifyResult.type === 'success'`. This might vary.
+    // VERIFY MSG91 SUCCESS/FAILURE RESPONSE STRUCTURE for the `verifyAccessToken` endpoint.
+    // 1. How does MSG91 indicate a successful verification in the JSON response? 
+    //    The example checks `verifyResult.type === 'success'`. This might vary (e.g., status code, specific field values).
+    // 2. How does MSG91 indicate a failure? What does the error object look like?
     // =====================================================================================
-    if (verifyResponse.ok && verifyResult.type === 'success') {
+    if (verifyResponse.ok && verifyResult.type === 'success') { // Adjust this condition based on MSG91 docs
       // In a real app:
       // 1. Look up the user by phoneNumber in your database (or create if new and verified).
       // 2. Create a session token (e.g., JWT for your Tatya Mitra app).
       // 3. Return your app's session token to the client.
       console.log(`MSG91 token verification successful for ${phoneNumber}. Session created (simulated). Message: ${verifyResult.message}`);
-      // For now, just return a generic success message.
       return NextResponse.json({ message: "Login successful. Session created (simulated)." }, { status: 200 });
     } else {
-      console.warn(`MSG91 token verification failed for ${phoneNumber}. Response from MSG91:`, verifyResult);
-      return NextResponse.json({ error: "OTP verification data could not be validated with provider.", details: verifyResult.message || "Unknown error from provider." }, { status: 400 });
+      console.warn(`MSG91 token verification failed for ${phoneNumber}. Status: ${verifyResponse.status}, Response from MSG91:`, verifyResult);
+      return NextResponse.json({ error: "OTP verification data could not be validated with provider.", details: verifyResult.message || "Unknown error from provider." }, { status: verifyResponse.status || 400 });
     }
 
   } catch (error: any) {
