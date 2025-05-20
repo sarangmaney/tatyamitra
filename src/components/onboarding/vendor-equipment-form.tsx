@@ -10,12 +10,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { MapPin, Camera, UploadCloud, PartyPopper } from 'lucide-react';
-import { useRouter } from 'next/navigation'; // Added useRouter
-
-// Firebase imports - uncomment and use when implementing submission
-// import { db } from '@/lib/firebase';
-// import { collection, addDoc, serverTimestamp, GeoPoint } from 'firebase/firestore';
+import { MapPin, Camera, UploadCloud, PartyPopper, PhoneCall } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type FormLocation = {
   district: string;
@@ -26,7 +22,7 @@ type FormLocation = {
 
 type FormFeature = {
   Speed: string;
-  tankCleaner: 'Yes' | 'No' | ''; 
+  tankCleaner: 'Yes' | 'No' | '';
 };
 
 type FormDataState = {
@@ -36,33 +32,32 @@ type FormDataState = {
   location: FormLocation;
   ownerName: string;
   vendorName: string;
+  phoneNumber: string; // Added phoneNumber
   pincode: string;
-  profileImageUri: string; // Will store preview URL or actual uploaded URL
+  profileImageUri: string;
   serviceableRadius: number;
-  // Equipment fields
   model: string;
   brand: string;
   category: 'Spraying Drone' | 'Seeding Drone' | 'Survey Drone' | 'Tractor' | 'Harvester' | 'Rotavator' | 'Other';
   tankSize: string;
   batteriesAvailable: number;
-  equipmentImages: string[]; // Will store preview URLs or actual uploaded URLs
+  equipmentImages: string[];
   feature: FormFeature;
   acresCapacityPerDay: number;
   pricePerAcre: number;
-  pricePerDay: number; 
+  pricePerDay: number;
   unit: 'Per Acre' | 'Per Hour' | 'Per Day';
-  // Service details
   travelMode: 'Own Vehicle' | 'Public Transport' | 'Walk' | 'Provided by Farmer' | '';
   availableDays: string[];
-  preferredTime: string[]; 
+  preferredTime: string[];
   servicesExpected: 'Marketing Support' | 'Order Booking' | 'On-field Training' | 'All of the above' | 'None' | '';
-  vendorId: string; 
+  vendorId: string;
 };
 
 
 const initialFormData: FormDataState = {
   createdAt: new Date().toISOString(),
-  kyc: 'Pending', 
+  kyc: 'Pending',
   lastLogin: new Date().toISOString(),
   location: {
     district: '',
@@ -72,6 +67,7 @@ const initialFormData: FormDataState = {
   },
   ownerName: '',
   vendorName: '',
+  phoneNumber: '', // Initialized phoneNumber
   pincode: '',
   profileImageUri: '',
   serviceableRadius: 100,
@@ -80,20 +76,20 @@ const initialFormData: FormDataState = {
   category: 'Spraying Drone',
   tankSize: '',
   batteriesAvailable: 0,
-  equipmentImages: [], 
+  equipmentImages: [],
   feature: {
-    Speed: '', 
-    tankCleaner: '', 
+    Speed: '',
+    tankCleaner: '',
   },
   acresCapacityPerDay: 0,
   pricePerAcre: 0,
-  pricePerDay: 0, 
+  pricePerDay: 0,
   unit: 'Per Acre',
-  travelMode: 'Own Vehicle', 
+  travelMode: 'Own Vehicle',
   availableDays: [],
-  preferredTime: [], 
+  preferredTime: [],
   servicesExpected: 'All of the above',
-  vendorId: '', 
+  vendorId: '',
 };
 
 
@@ -102,10 +98,10 @@ export function VendorEquipmentForm() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState<FormDataState>(initialFormData);
   const { toast } = useToast();
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
-  const updateField = (field: keyof FormDataState, value: FormDataState[keyof FormDataState] | number | string | string[] | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value as any }));
+  const updateField = (field: keyof FormDataState, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateNested = (section: 'location' | 'feature', key: string, value: string | number | boolean) => {
@@ -114,7 +110,7 @@ export function VendorEquipmentForm() {
       [section]: { ...prev[section], [key]: value },
     }));
   };
-  
+
   const handlePreferredTimeChange = (timeOption: string, checked: boolean) => {
     setFormData(prev => {
       const currentPreferredTimes = prev.preferredTime;
@@ -143,14 +139,14 @@ export function VendorEquipmentForm() {
       toast({ variant: 'destructive', title: 'Location Error', description: 'Geolocation is not supported by your browser.' });
     }
   };
-  
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, fieldName: 'profileImageUri' | 'equipmentImages') => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      if (fieldName === 'equipmentImages') { 
+      if (fieldName === 'equipmentImages') {
         const fileUrls = Array.from(files).map(file => URL.createObjectURL(file));
-        updateField(fieldName, fileUrls); 
-      } else { 
+        updateField(fieldName, fileUrls);
+      } else {
         const fileUrl = URL.createObjectURL(files[0]);
         updateField(fieldName, fileUrl);
       }
@@ -160,12 +156,15 @@ export function VendorEquipmentForm() {
 
   const nextStep = () => {
     if (step === 1) {
-      if (!formData.ownerName || !formData.vendorName || !formData.location.district || !formData.location.taluka || !formData.pincode) {
-        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill all fields in Vendor Info.' });
+      if (!formData.ownerName || !formData.vendorName || !formData.location.district || !formData.location.taluka || !formData.pincode || !formData.phoneNumber) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill all fields in Vendor Info, including Phone Number.' });
+        return;
+      }
+      if (!/^\d{10}$/.test(formData.phoneNumber)) {
+        toast({ variant: 'destructive', title: 'Invalid Phone Number', description: 'Please enter a valid 10-digit phone number.' });
         return;
       }
     }
-    // Validation for step 3 (capacity check) is now in handleSubmit
     setStep((prev) => Math.min(prev + 1, 3));
   };
 
@@ -175,8 +174,8 @@ export function VendorEquipmentForm() {
     <div className="flex items-center">
       <div
         className={`w-10 h-10 flex items-center justify-center rounded-full border-2 font-bold transition-all
-          ${currentStep === number ? 'bg-primary text-primary-foreground border-primary' : 
-          number < currentStep ? 'bg-green-500 text-white border-green-500' : 
+          ${currentStep === number ? 'bg-primary text-primary-foreground border-primary' :
+          number < currentStep ? 'bg-green-500 text-white border-green-500' :
           'text-muted-foreground border-border'}`}
       >
         {number}
@@ -190,34 +189,20 @@ export function VendorEquipmentForm() {
         let calculatedWorkingHours = 0;
         if (formData.preferredTime.includes('Morning')) calculatedWorkingHours += 3;
         if (formData.preferredTime.includes('Evening')) calculatedWorkingHours += 3;
-        
-        if (formData.preferredTime.includes('AnyTime') && calculatedWorkingHours === 0 && formData.preferredTime.length === 1) { 
-          calculatedWorkingHours = 6; // Assume 6 hours if *only* "Any Time" is selected
-        } else if (formData.preferredTime.includes('AnyTime') && calculatedWorkingHours > 0) {
-          // If AnyTime is selected along with Morning/Evening, it implies flexibility within those,
-          // so we don't double-count. Max hours would be 6 if both Morning & Evening are also selected.
-          // Or, it implies "Any Time during the day", so we might use a higher cap.
-          // For now, let's assume "AnyTime" means general availability, and if Morning/Evening are also chosen,
-          // it means preference within those slots but can work outside.
-          // Let's stick to the sum of Morning/Evening if selected, or 6 if only AnyTime.
-        } else if (calculatedWorkingHours === 0 && formData.preferredTime.length > 0){
-             toast({
-                variant: 'destructive',
-                title: 'Invalid Time Selection',
-                description: 'Please select valid preferred time slots for capacity calculation or select "Any Time".',
-            });
-            return;
+
+        if (formData.preferredTime.includes('AnyTime') && calculatedWorkingHours === 0 && formData.preferredTime.length === 1) {
+          calculatedWorkingHours = 6;
         } else if (calculatedWorkingHours === 0 && formData.preferredTime.length === 0) {
              toast({
                 variant: 'destructive',
                 title: 'Time Selection Required',
-                description: 'Please select preferred working time slots.',
+                description: 'Please select preferred working time slots for capacity calculation.',
             });
             return;
         }
-        
-        const maxAcres = 5 * calculatedWorkingHours; 
-        
+
+        const maxAcres = 5 * calculatedWorkingHours;
+
         if (formData.acresCapacityPerDay > maxAcres) {
           toast({
             variant: 'destructive',
@@ -228,35 +213,70 @@ export function VendorEquipmentForm() {
         }
     }
 
-    const calculatedPricePerDay = formData.pricePerAcre > 0 && formData.acresCapacityPerDay > 0 
-                                  ? formData.acresCapacityPerDay * formData.pricePerAcre 
+    const calculatedPricePerDay = formData.pricePerAcre > 0 && formData.acresCapacityPerDay > 0
+                                  ? formData.acresCapacityPerDay * formData.pricePerAcre
                                   : 0;
     const finalFormData: FormDataState = {
       ...formData,
       pricePerDay: calculatedPricePerDay,
-      vendorId: 'vendor_' + Date.now(), 
-      createdAt: new Date().toISOString(), 
-      lastLogin: new Date().toISOString(), 
+      vendorId: 'vendor_' + Date.now(),
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
     };
-    
-    // Simulate saving data
-    console.log("Simulating saving data to database:", finalFormData);
-    // Here you would add your actual Firestore `addDoc` calls
-    // For vendor:
-    // const vendorDocData = { ownerName: finalFormData.ownerName, vendorName: finalFormData.vendorName, /* ... other vendor fields */ };
-    // const vendorRef = await addDoc(collection(db, "vendor"), vendorDocData);
-    // For equipment:
-    // const equipmentDocData = { brand: finalFormData.brand, model: finalFormData.model, /* ... other equipment fields */ vendorId: vendorRef.id };
-    // await addDoc(collection(db, `vendor/${vendorRef.id}/VendorEquipments`), equipmentDocData);
 
-    
+    console.log("Simulating saving data to database:", finalFormData);
+    // Firestore submission logic would go here:
+    // try {
+    //   // 1. Add to 'vendor' collection
+    //   const vendorDocData = {
+    //     ownerName: finalFormData.ownerName,
+    //     vendorName: finalFormData.vendorName,
+    //     phoneNumber: finalFormData.phoneNumber,
+    //     location: new GeoPoint(parseFloat(finalFormData.location.lat) || 0, parseFloat(finalFormData.location.long) || 0),
+    //     district: finalFormData.location.district,
+    //     taluka: finalFormData.location.taluka,
+    //     pincode: finalFormData.pincode,
+    //     profileImageUri: finalFormData.profileImageUri, // Placeholder for actual image upload URL
+    //     serviceableRadius: finalFormData.serviceableRadius,
+    //     kyc: finalFormData.kyc,
+    //     lastLogin: serverTimestamp(),
+    //     createdAt: serverTimestamp(),
+    //   };
+    //   const vendorRef = await addDoc(collection(db, "vendor"), vendorDocData);
+    //
+    //   // 2. Add to 'VendorEquipments' subcollection
+    //   const equipmentDocData = {
+    //     brand: finalFormData.brand,
+    //     model: finalFormData.model,
+    //     category: finalFormData.category,
+    //     tankSize: finalFormData.tankSize,
+    //     batteriesAvailable: finalFormData.batteriesAvailable,
+    //     images: finalFormData.equipmentImages, // Placeholder for actual image upload URLs
+    //     feature: finalFormData.feature,
+    //     acresCapacityPerDay: finalFormData.acresCapacityPerDay,
+    //     pricePerAcre: finalFormData.pricePerAcre,
+    //     pricePerDay: finalFormData.pricePerDay,
+    //     unit: finalFormData.unit,
+    //     // availability logic for offDays, availableDays would be more complex
+    //     // Add other relevant equipment fields
+    //     vendorId: vendorRef.id, // Link to the vendor
+    //     createdAt: serverTimestamp(),
+    //   };
+    //   await addDoc(collection(db, `vendor/${vendorRef.id}/VendorEquipments`), equipmentDocData);
+    //
+    //   toast({ title: 'Registration Successful!', description: 'Your details have been saved.'});
+    //   setShowSuccess(true);
+    // } catch (error) {
+    //   console.error("Error saving to Firestore: ", error);
+    //   toast({ variant: "destructive", title: "Registration Failed", description: "Could not save your details. Please try again."});
+    // }
+
     toast({ title: 'Registration Details Submitted!', description: 'Your information would be saved to the database.'});
     setShowSuccess(true);
   };
 
   const handleDialogLoginClick = () => {
     console.log("All details 'saved'. Navigating to dashboard.");
-    // In a real app, after successful save and potentially login, redirect.
     setShowSuccess(false);
     router.push("/dashboard");
   };
@@ -266,7 +286,7 @@ export function VendorEquipmentForm() {
   const timeOptions = [
     { id: "morning", label: "Morning (e.g., 7 AM - 10 AM)", value: "Morning" },
     { id: "evening", label: "Evening (e.g., 4 PM - 7 PM)", value: "Evening" },
-    { id: "anytime", label: "Any Time (Flexible)", value: "AnyTime" },
+    { id: "any_time", label: "Any Time (Flexible)", value: "AnyTime" },
   ];
 
 
@@ -305,6 +325,25 @@ export function VendorEquipmentForm() {
               <Label htmlFor="vendorName">Vendor/Center Name</Label>
               <Input id="vendorName" placeholder="e.g., Patil Krishi Seva Kendra" value={formData.vendorName} onChange={(e) => updateField('vendorName', e.target.value)} />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number for Login</Label>
+              <div className="flex items-center">
+                <span className="flex h-10 items-center justify-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                  +91
+                </span>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  placeholder="Enter your 10-digit number"
+                  value={formData.phoneNumber}
+                  onChange={(e) => updateField('phoneNumber', e.target.value)}
+                  className="rounded-l-none"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="district">District</Label>
@@ -437,14 +476,14 @@ export function VendorEquipmentForm() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 border rounded-md">
                 {daysOfWeek.map(day => (
                   <div key={day} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`day-${day}`} 
+                    <Checkbox
+                      id={`day-${day}`}
                       checked={formData.availableDays.includes(day)}
                       onCheckedChange={(checked) => {
-                        const isChecked = !!checked; 
-                        updateField('availableDays', 
-                          isChecked 
-                            ? [...formData.availableDays, day] 
+                        const isChecked = !!checked;
+                        updateField('availableDays',
+                          isChecked
+                            ? [...formData.availableDays, day]
                             : formData.availableDays.filter(d => d !== day)
                         );
                       }}
@@ -490,7 +529,7 @@ export function VendorEquipmentForm() {
             <div className="space-y-2">
               <Label htmlFor="servicesExpected">Support Expected from Tatya Mitra</Label>
               <Select value={formData.servicesExpected} onValueChange={(value) => updateField('servicesExpected', value as FormDataState['servicesExpected'])}>
-                <SelectTrigger id="servicesExpected"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="servicesExpected"><SelectValue placeholder="Select support expected" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Marketing Support">Marketing Support</SelectItem>
                   <SelectItem value="Order Booking">Order Booking Assistance</SelectItem>
@@ -510,7 +549,7 @@ export function VendorEquipmentForm() {
       </CardContent>
       <CardFooter className="flex justify-between mt-6">
         {step > 1 && <Button variant="outline" onClick={prevStep}>Back</Button>}
-        <div className="ml-auto"> 
+        <div className="ml-auto">
           {step < 3 ? (
             <Button onClick={nextStep} className="bg-primary hover:bg-primary/90">Next</Button>
           ) : (
@@ -531,7 +570,7 @@ export function VendorEquipmentForm() {
             You're all set! Let’s earn lakhs by renting technology and empowering farmers' lives. 🚀
           </DialogDescription>
           <DialogFooter className="sm:justify-center">
-            <Button 
+            <Button
               onClick={handleDialogLoginClick}
               className="w-full sm:w-auto bg-primary hover:bg-primary/90"
             >
@@ -544,4 +583,4 @@ export function VendorEquipmentForm() {
   );
 }
 
-
+    
