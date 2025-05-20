@@ -41,17 +41,14 @@ export async function POST(request: NextRequest) {
     // For a true test, the send-otp would need to communicate the OTP to verify-otp
     // (e.g., by returning it in dev mode, or using a shared DB).
     // For this exercise, we'll assume send-otp wrote to this *exact* otpStore instance if running locally.
-    // If it's not found, we'll use a fallback for the demo OTP for "1234567890".
+    // If it's not found, we'll use a fallback for the demo OTP for "1234567890", "0987654321", and "9595597583".
     
     let storedEntry = otpStore[phoneNumber];
 
     // Fallback for demo if store is empty (common in serverless or after restart)
-    if (!storedEntry && phoneNumber === "1234567890") {
+    if (!storedEntry && (phoneNumber === "1234567890" || phoneNumber === "0987654321" || phoneNumber === "9595597583")) {
         console.warn(`OTP for ${phoneNumber} not found in verify-otp's in-memory store. Using fallback demo OTP.`);
         storedEntry = { otp: "123456", timestamp: Date.now() - 60000, verified: false }; // Pretend it was sent 1 min ago
-    } else if (!storedEntry && phoneNumber === "0987654321") {
-        console.warn(`OTP for ${phoneNumber} not found in verify-otp's in-memory store. Using fallback demo OTP.`);
-        storedEntry = { otp: "123456", timestamp: Date.now() - 60000, verified: false };
     }
 
 

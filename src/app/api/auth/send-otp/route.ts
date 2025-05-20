@@ -21,6 +21,7 @@ const SendOtpSchema = z.object({
 const registeredUsers: Record<string, { name: string }> = {
   "1234567890": { name: "Demo User One" },
   "0987654321": { name: "Demo User Two" },
+  "9595597583": { name: "New Registered User" }, // Added your phone number
 };
 
 export async function POST(request: NextRequest) {
@@ -59,5 +60,19 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Send OTP error:", error);
     return NextResponse.json({ error: error.message || "An unexpected error occurred." }, { status: 500 });
+  }
+}
+
+// Helper to make the in-memory store slightly more persistent across HMR in dev
+// This is still not for production.
+if (typeof global !== 'undefined') {
+  // @ts-ignore
+  if (!global.otpStoreFromSendOtp) {
+    // @ts-ignore
+    global.otpStoreFromSendOtp = otpStore;
+  } else {
+    // If it exists, merge (though simple assignment is fine for this basic store)
+    // @ts-ignore
+    Object.assign(global.otpStoreFromSendOtp, otpStore);
   }
 }
