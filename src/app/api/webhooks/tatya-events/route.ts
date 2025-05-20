@@ -6,29 +6,39 @@ import { type NextRequest, NextResponse } from 'next/server';
  * This endpoint should be provided as the callback URL in the external service's webhook settings.
  * 
  * To secure this endpoint, the calling service should be configured to send a secret token
- * in a custom header (e.g., 'X-Tatya-Webhook-Secret'). This endpoint will then verify that token.
+ * in a custom header. This endpoint will then verify that token.
+ * 
+ * In the external service's webhook configuration:
+ * - URL: https://<your-app-domain>/api/webhooks/tatya-events
+ * - Headers:
+ *   - Key: TATYA_WEBHOOK_SECRET  (This is the HTTP Header Name)
+ *   - Value: <your_actual_strong_secret_value> (e.g., aJ7$sP2!qR9&zX0*LpWc)
+ * 
+ * Environment Variable on Vercel/Server:
+ * - TATYA_WEBHOOK_SECRET=<your_actual_strong_secret_value> (The same value as above)
  */
 
-const EXPECTED_WEBHOOK_SECRET = process.env.TATYA_WEBHOOK_SECRET;
+const EXPECTED_WEBHOOK_SECRET_VALUE_FROM_ENV = process.env.TATYA_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {
   // 1. Verify the secret token
-  const receivedSecret = request.headers.get('X-Tatya-Webhook-Secret');
+  // The Key from your form ('TATYA_WEBHOOK_SECRET') is the HTTP header name to check.
+  const receivedSecretFromHeader = request.headers.get('TATYA_WEBHOOK_SECRET');
 
-  if (!EXPECTED_WEBHOOK_SECRET) {
+  if (!EXPECTED_WEBHOOK_SECRET_VALUE_FROM_ENV) {
     console.error('Webhook secret is not configured in environment variables (TATYA_WEBHOOK_SECRET). Denying all requests.');
-    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'Webhook not configured on server' }, { status: 500 });
   }
 
-  if (receivedSecret !== EXPECTED_WEBHOOK_SECRET) {
-    console.warn('Invalid or missing webhook secret. Request denied.');
+  if (receivedSecretFromHeader !== EXPECTED_WEBHOOK_SECRET_VALUE_FROM_ENV) {
+    console.warn(`Invalid or missing webhook secret in header 'TATYA_WEBHOOK_SECRET'. Request denied. Expected: '${EXPECTED_WEBHOOK_SECRET_VALUE_FROM_ENV}', Received: '${receivedSecretFromHeader}'`);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // If secret is valid, proceed to process the webhook
   try {
     const body = await request.json();
-    console.log('Received VERIFIED webhook event:', JSON.stringify(body, null, 2));
+    console.log('Received VERIFIED webhook event (header TATYA_WEBHOOK_SECRET matched):', JSON.stringify(body, null, 2));
 
     // Process the webhook event here based on its content.
     // For example, if it's an SMS status update:
@@ -57,5 +67,5 @@ export async function GET(request: NextRequest) {
   // Logic for verification if needed by the provider.
   // Often involves returning a specific challenge token.
   // Check the provider's documentation.
-  return NextResponse.json({ message: 'Webhook endpoint is active and expects POST requests with a valid secret.' }, { status: 200 });
+  return NextResponse.json({ message: 'Webhook endpoint is active and expects POST requests with a valid secret in the TATYA_WEBHOOK_SECRET header.' }, { status: 200 });
 }
