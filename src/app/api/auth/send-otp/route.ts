@@ -17,11 +17,12 @@ const SendOtpSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits."),
 });
 
-// Simulated list of registered users for demo purposes
-const registeredUsers: Record<string, { name: string }> = {
+// Simulated list of pre-registered users for demo context (e.g., admin, early users)
+// This list is NO LONGER a hard gate for sending OTPs.
+const preRegisteredUsers: Record<string, { name: string }> = {
   "1234567890": { name: "Demo User One" },
   "0987654321": { name: "Demo User Two" },
-  "9595597583": { name: "New Registered User" }, // Added your phone number
+  "9595597583": { name: "Previously Added User" },
 };
 
 export async function POST(request: NextRequest) {
@@ -35,9 +36,11 @@ export async function POST(request: NextRequest) {
 
     const { phoneNumber } = validationResult.data;
 
-    // Simulate checking if user exists
-    if (!registeredUsers[phoneNumber]) {
-      return NextResponse.json({ error: `Phone number +91 ${phoneNumber} is not registered. Please sign up.` }, { status: 404 });
+    // Simulate checking if user exists for logging/context, but don't block.
+    if (preRegisteredUsers[phoneNumber]) {
+      console.log(`Phone number +91 ${phoneNumber} is in the pre-registered list.`);
+    } else {
+      console.log(`Phone number +91 ${phoneNumber} is not in the pre-registered list. Proceeding with OTP generation (simulating a new user who just signed up).`);
     }
 
     // Simulate OTP generation (fixed for demo)
