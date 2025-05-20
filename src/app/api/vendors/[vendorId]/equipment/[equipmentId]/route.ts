@@ -12,7 +12,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/firebase-admin'; // Ensure Firebase Admin is initialized
+import { db, GeoPoint } from '@/lib/firebase-admin'; // Ensure Firebase Admin is initialized
 import type { FirebaseError } from 'firebase-admin/app'; // For type hinting Firestore errors
 
 // Define Zod schema for the detailed equipment response
@@ -57,6 +57,7 @@ export async function GET(
 
     if (!db) {
       console.warn(`Firestore not initialized, serving mock data for /api/vendors/${vendorId}/equipment/${equipmentId}`);
+      // Mock data for when Firestore isn't available (e.g., env vars not set during local dev without them)
       if (vendorId === "vendor_12345xyz" && equipmentId === "drone_abc_789") {
         const mockEquipmentDetail = {
           equipmentId: "drone_abc_789",
@@ -73,7 +74,7 @@ export async function GET(
           pricePerAcre: 480,
           availabilityStatus: "available" as const,
           batteriesAvailable: 4,
-          rating: 4.3,
+          rating: 4.3, // Example rating
           images: ["https://placehold.co/600x400.png", "https://placehold.co/600x400.png"],
           videoUrl: "https://www.youtube.com/watch?v=examplevideo_drone",
           yieldIncreaseBenefit: "Precise application reduces chemical wastage and ensures even coverage, enhancing crop health and yield by up to 15%.",
@@ -114,7 +115,7 @@ export async function GET(
       model: equipmentData.model || 'Unknown Model',
       category: equipmentData.category || 'Unknown Category',
       specifications: equipmentData.specifications,
-      features: equipmentData.feature, // Ensure 'feature' is the correct field name in Firestore
+      features: equipmentData.feature, // Ensure 'feature' is the correct field name in Firestore, or features
       tankSize: equipmentData.tankSize,
       acresCapacityPerDay: equipmentData.acresCapacityPerDay,
       pricePerAcre: equipmentData.pricePerAcre,
@@ -126,11 +127,15 @@ export async function GET(
       images: equipmentData.images || [],
       videoUrl: equipmentData.videoUrl,
       yieldIncreaseBenefit: equipmentData.yieldIncreaseBenefit,
-      location: equipmentData.Location ? { 
-        lat: equipmentData.Location.latitude, // Assuming Firestore GeoPoint stores as latitude/longitude
+      location: equipmentData.Location instanceof GeoPoint ? { 
+        lat: equipmentData.Location.latitude,
+        lon: equipmentData.Location.longitude,
+        address: equipmentData.Location.address // Assuming address is stored alongside GeoPoint, otherwise fetch separately
+      } : (equipmentData.Location && typeof equipmentData.Location.latitude === 'number' && typeof equipmentData.Location.longitude === 'number' ? {
+        lat: equipmentData.Location.latitude,
         lon: equipmentData.Location.longitude,
         address: equipmentData.Location.address
-      } : undefined,
+      } : undefined),
     };
     
     const parsedResponse = DetailedEquipmentSchema.parse(responseData);
@@ -150,3 +155,4 @@ export async function GET(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

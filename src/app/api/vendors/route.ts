@@ -125,13 +125,13 @@ export async function GET(request: NextRequest) {
     // Real Firestore logic
     let vendorQuery: admin.firestore.Query = db.collection('vendor');
 
-    if (pincode) {
-      // This assumes you have a 'pincode' field at the top level of your vendor documents
-      // or nested like 'location.pincode' AND that this field is indexed for querying.
-      // vendorQuery = vendorQuery.where('location.pincode', '==', pincode); // Example for nested
-      // vendorQuery = vendorQuery.where('pincode', '==', pincode); // Example for top-level
-    }
-    // Note: Radius-based filtering (lat, lon, radius) is complex with Firestore alone.
+    // Basic pincode filtering (assumes 'pincode' field exists at the top level of vendor docs)
+    // For production, ensure 'pincode' is indexed in Firestore if used frequently.
+    // if (pincode) {
+    //   vendorQuery = vendorQuery.where('pincode', '==', pincode);
+    // }
+    // Note: Radius-based filtering (lat, lon, radius) is complex with Firestore alone and usually requires
+    // server-side calculation or a geospatial database/service. This example doesn't implement it.
 
     const vendorSnapshots = await vendorQuery.get();
     const vendorsDataFromDb: VendorResponseItem[] = [];
@@ -139,6 +139,7 @@ export async function GET(request: NextRequest) {
     for (const vendorDoc of vendorSnapshots.docs) {
       const vendorData = vendorDoc.data();
       
+      // If pincode filter is active and vendor doesn't match, skip
       if (pincode && vendorData.pincode !== pincode && vendorData.location?.pincode !== pincode) {
         continue;
       }
@@ -162,10 +163,11 @@ export async function GET(request: NextRequest) {
           tankSize: eqData.tankSize,
           acresCapacityPerDay: eqData.acresCapacityPerDay,
           primaryImageUrl: eqData.images && eqData.images.length > 0 ? eqData.images[0] : `https://placehold.co/600x400.png`,
-          status: eqData.availability || 'unavailable',
+          status: eqData.availability || 'unavailable', // Ensure your Firestore field is 'availability'
         };
       });
 
+      // Only include vendor if no equipmentCategory filter OR if they have matching equipment
       if (!equipmentCategory || (equipmentCategory && equipmentsList.length > 0)) {
         vendorsDataFromDb.push({
           vendorId: vendorDoc.id,
@@ -175,7 +177,7 @@ export async function GET(request: NextRequest) {
             taluka: vendorData.taluka || vendorData.location?.taluka,
           },
           profileImageUri: vendorData.profileImageUri || 'https://placehold.co/100x100.png',
-          serviceableRadiusKm: vendorData.serviceableRadius,
+          serviceableRadiusKm: vendorData.serviceableRadius, // Ensure field name matches Firestore
           equipments: equipmentsList.length > 0 ? equipmentsList : undefined,
         });
       }
