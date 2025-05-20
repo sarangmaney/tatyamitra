@@ -22,7 +22,7 @@ const EquipmentItemSchema = z.object({
   pricePerAcre: z.number().optional(),
   pricePerDay: z.number().optional(),
   pricePerHour: z.number().optional(),
-  rating: z.number().optional().min(0).max(5),
+  rating: z.number().min(0).max(5).optional(), // Corrected: .min().max() before .optional()
   tankSize: z.string().optional().describe("e.g., '10L', '16L' for drones"),
   acresCapacityPerDay: z.number().optional(),
   primaryImageUrl: z.string().url().optional(),

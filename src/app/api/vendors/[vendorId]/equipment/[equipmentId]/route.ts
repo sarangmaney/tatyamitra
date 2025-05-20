@@ -24,7 +24,7 @@ const DetailedEquipmentSchema = z.object({
   // availableDays: z.array(z.string()).optional().describe("Array of specific available dates or recurring day names"),
   availabilityStatus: z.enum(["available", "unavailable", "maintenance"]), // Your Firestore 'availability' field
   batteriesAvailable: z.number().optional(),
-  rating: z.number().optional().min(0).max(5),
+  rating: z.number().min(0).max(5).optional(), // Corrected: .min().max() before .optional()
   // reviews: z.array(z.object({ rating: z.number(), comment: z.string() })).optional(), // Or link to reviews API
   images: z.array(z.string().url()).optional().describe("Array of image URLs"),
   videoUrl: z.string().url().optional(),
