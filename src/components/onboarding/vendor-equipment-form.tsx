@@ -7,18 +7,62 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox'; // Added Checkbox
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin, Camera, UploadCloud, PartyPopper } from 'lucide-react';
+import { useRouter } from 'next/navigation'; // Added useRouter
 
 // Firebase imports - uncomment and use when implementing submission
 // import { db } from '@/lib/firebase';
 // import { collection, addDoc, serverTimestamp, GeoPoint } from 'firebase/firestore';
 
-const initialFormData = {
+type FormLocation = {
+  district: string;
+  taluka: string;
+  lat: string;
+  long: string;
+};
+
+type FormFeature = {
+  Speed: string;
+  tankCleaner: 'Yes' | 'No' | ''; 
+};
+
+type FormDataState = {
+  createdAt: string;
+  kyc: 'Pending' | 'Verified' | 'Rejected';
+  lastLogin: string;
+  location: FormLocation;
+  ownerName: string;
+  vendorName: string;
+  pincode: string;
+  profileImageUri: string; // Will store preview URL or actual uploaded URL
+  serviceableRadius: number;
+  // Equipment fields
+  model: string;
+  brand: string;
+  category: 'Spraying Drone' | 'Seeding Drone' | 'Survey Drone' | 'Tractor' | 'Harvester' | 'Rotavator' | 'Other';
+  tankSize: string;
+  batteriesAvailable: number;
+  equipmentImages: string[]; // Will store preview URLs or actual uploaded URLs
+  feature: FormFeature;
+  acresCapacityPerDay: number;
+  pricePerAcre: number;
+  pricePerDay: number; 
+  unit: 'Per Acre' | 'Per Hour' | 'Per Day';
+  // Service details
+  travelMode: 'Own Vehicle' | 'Public Transport' | 'Walk' | 'Provided by Farmer' | '';
+  availableDays: string[];
+  preferredTime: string[]; 
+  servicesExpected: 'Marketing Support' | 'Order Booking' | 'On-field Training' | 'All of the above' | 'None' | '';
+  vendorId: string; 
+};
+
+
+const initialFormData: FormDataState = {
   createdAt: new Date().toISOString(),
-  kyc: 'Pending', // Default KYC status
+  kyc: 'Pending', 
   lastLogin: new Date().toISOString(),
   location: {
     district: '',
@@ -29,45 +73,39 @@ const initialFormData = {
   ownerName: '',
   vendorName: '',
   pincode: '',
-  profileImageUri: '', // Will store preview URL or actual uploaded URL
-  serviceableRadius: 100, // Default value
-  // Equipment fields
+  profileImageUri: '',
+  serviceableRadius: 100,
   model: '',
   brand: '',
-  category: 'Spraying Drone', // Default category
+  category: 'Spraying Drone',
   tankSize: '',
   batteriesAvailable: 0,
-  equipmentImages: [] as string[], // Will store preview URLs or actual uploaded URLs
+  equipmentImages: [], 
   feature: {
     Speed: '', 
-    tankCleaner: 'No', 
+    tankCleaner: '', 
   },
   acresCapacityPerDay: 0,
   pricePerAcre: 0,
   pricePerDay: 0, 
-  unit: 'Per Acre', // Default unit
-  // Service details
-  travelMode: 'Own Vehicle', // Default
-  availableDays: [] as string[],
-  preferredTime: [] as string[], // Changed to array for multi-select
-  servicesExpected: 'All of the above', // Default
+  unit: 'Per Acre',
+  travelMode: 'Own Vehicle', 
+  availableDays: [],
+  preferredTime: [], 
+  servicesExpected: 'All of the above',
   vendorId: '', 
 };
 
-type FormData = typeof initialFormData;
-
-// Define specific types for nested objects if they become complex
-type FormLocation = FormData['location'];
-type FormFeature = FormData['feature'];
 
 export function VendorEquipmentForm() {
   const [step, setStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [formData, setFormData] = useState<FormDataState>(initialFormData);
   const { toast } = useToast();
+  const router = useRouter(); // Initialize router
 
-  const updateField = (field: keyof FormData, value: FormData[keyof FormData]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const updateField = (field: keyof FormDataState, value: FormDataState[keyof FormDataState] | number | string | string[] | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value as any }));
   };
 
   const updateNested = (section: 'location' | 'feature', key: string, value: string | number | boolean) => {
@@ -109,12 +147,12 @@ export function VendorEquipmentForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, fieldName: 'profileImageUri' | 'equipmentImages') => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      if (fieldName === 'equipmentImages') { // Multiple files for equipment
+      if (fieldName === 'equipmentImages') { 
         const fileUrls = Array.from(files).map(file => URL.createObjectURL(file));
-        updateField(fieldName, fileUrls as any); 
-      } else { // Single file for profile image
+        updateField(fieldName, fileUrls); 
+      } else { 
         const fileUrl = URL.createObjectURL(files[0]);
-        updateField(fieldName, fileUrl as any);
+        updateField(fieldName, fileUrl);
       }
     }
   };
@@ -127,9 +165,7 @@ export function VendorEquipmentForm() {
         return;
       }
     }
-    if (step === 3) { // Validation moving from step 3 to submission (actually handled in handleSubmit now)
-        // Drone capacity validation logic moved to handleSubmit
-    }
+    // Validation for step 3 (capacity check) is now in handleSubmit
     setStep((prev) => Math.min(prev + 1, 3));
   };
 
@@ -154,23 +190,34 @@ export function VendorEquipmentForm() {
         let calculatedWorkingHours = 0;
         if (formData.preferredTime.includes('Morning')) calculatedWorkingHours += 3;
         if (formData.preferredTime.includes('Evening')) calculatedWorkingHours += 3;
-        if (formData.preferredTime.includes('AnyTime') && calculatedWorkingHours === 0) { 
-          calculatedWorkingHours = 6; // Assume 6 hours if only "Any Time" is selected
-        }
         
-        const maxAcres = 5 * calculatedWorkingHours; // Assuming 5 acres/hour capability
-        
-        if (calculatedWorkingHours === 0 && formData.preferredTime.length > 0 && !formData.preferredTime.includes('AnyTime')) {
-            // This case should ideally not happen if UI is correct, but as a fallback
-            toast({
+        if (formData.preferredTime.includes('AnyTime') && calculatedWorkingHours === 0 && formData.preferredTime.length === 1) { 
+          calculatedWorkingHours = 6; // Assume 6 hours if *only* "Any Time" is selected
+        } else if (formData.preferredTime.includes('AnyTime') && calculatedWorkingHours > 0) {
+          // If AnyTime is selected along with Morning/Evening, it implies flexibility within those,
+          // so we don't double-count. Max hours would be 6 if both Morning & Evening are also selected.
+          // Or, it implies "Any Time during the day", so we might use a higher cap.
+          // For now, let's assume "AnyTime" means general availability, and if Morning/Evening are also chosen,
+          // it means preference within those slots but can work outside.
+          // Let's stick to the sum of Morning/Evening if selected, or 6 if only AnyTime.
+        } else if (calculatedWorkingHours === 0 && formData.preferredTime.length > 0){
+             toast({
                 variant: 'destructive',
                 title: 'Invalid Time Selection',
-                description: 'Please select valid preferred time slots for capacity calculation.',
+                description: 'Please select valid preferred time slots for capacity calculation or select "Any Time".',
+            });
+            return;
+        } else if (calculatedWorkingHours === 0 && formData.preferredTime.length === 0) {
+             toast({
+                variant: 'destructive',
+                title: 'Time Selection Required',
+                description: 'Please select preferred working time slots.',
             });
             return;
         }
-
-
+        
+        const maxAcres = 5 * calculatedWorkingHours; 
+        
         if (formData.acresCapacityPerDay > maxAcres) {
           toast({
             variant: 'destructive',
@@ -181,8 +228,10 @@ export function VendorEquipmentForm() {
         }
     }
 
-    const calculatedPricePerDay = formData.acresCapacityPerDay * formData.pricePerAcre;
-    const finalFormData: FormData = {
+    const calculatedPricePerDay = formData.pricePerAcre > 0 && formData.acresCapacityPerDay > 0 
+                                  ? formData.acresCapacityPerDay * formData.pricePerAcre 
+                                  : 0;
+    const finalFormData: FormDataState = {
       ...formData,
       pricePerDay: calculatedPricePerDay,
       vendorId: 'vendor_' + Date.now(), 
@@ -190,10 +239,26 @@ export function VendorEquipmentForm() {
       lastLogin: new Date().toISOString(), 
     };
     
-    console.log("Form Data to Submit:", finalFormData);
+    // Simulate saving data
+    console.log("Simulating saving data to database:", finalFormData);
+    // Here you would add your actual Firestore `addDoc` calls
+    // For vendor:
+    // const vendorDocData = { ownerName: finalFormData.ownerName, vendorName: finalFormData.vendorName, /* ... other vendor fields */ };
+    // const vendorRef = await addDoc(collection(db, "vendor"), vendorDocData);
+    // For equipment:
+    // const equipmentDocData = { brand: finalFormData.brand, model: finalFormData.model, /* ... other equipment fields */ vendorId: vendorRef.id };
+    // await addDoc(collection(db, `vendor/${vendorRef.id}/VendorEquipments`), equipmentDocData);
+
     
-    toast({ title: 'Registration Submitted (Simulated)!', description: 'Your information would be sent to the server here.'});
+    toast({ title: 'Registration Details Submitted!', description: 'Your information would be saved to the database.'});
     setShowSuccess(true);
+  };
+
+  const handleDialogLoginClick = () => {
+    console.log("All details 'saved'. Navigating to dashboard.");
+    // In a real app, after successful save and potentially login, redirect.
+    setShowSuccess(false);
+    router.push("/dashboard");
   };
 
 
@@ -234,11 +299,11 @@ export function VendorEquipmentForm() {
           <>
             <div className="space-y-2">
               <Label htmlFor="ownerName">Owner Name</Label>
-              <Input id="ownerName" placeholder="e.g., Suresh Patil" value={formData.ownerName} onChange={(e) => updateField('ownerName', e.target.value as any)} />
+              <Input id="ownerName" placeholder="e.g., Suresh Patil" value={formData.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="vendorName">Vendor/Center Name</Label>
-              <Input id="vendorName" placeholder="e.g., Patil Krishi Seva Kendra" value={formData.vendorName} onChange={(e) => updateField('vendorName', e.target.value as any)} />
+              <Input id="vendorName" placeholder="e.g., Patil Krishi Seva Kendra" value={formData.vendorName} onChange={(e) => updateField('vendorName', e.target.value)} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -252,7 +317,7 @@ export function VendorEquipmentForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="pincode">Pincode</Label>
-              <Input id="pincode" type="tel" maxLength={6} value={formData.pincode} onChange={(e) => updateField('pincode', e.target.value as any)} />
+              <Input id="pincode" type="tel" maxLength={6} value={formData.pincode} onChange={(e) => updateField('pincode', e.target.value)} />
             </div>
              <Button variant="outline" onClick={handleCaptureLocation} className="w-full">
               <MapPin className="mr-2 h-4 w-4" /> Capture Current Location (Lat/Long)
@@ -268,7 +333,7 @@ export function VendorEquipmentForm() {
                 <UploadCloud className="h-6 w-6 text-muted-foreground" />
                 <Input id="profileImageUriInput" type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 'profileImageUri')} className="flex-1" />
               </div>
-              {formData.profileImageUri && <img src={formData.profileImageUri} alt="Profile Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" />}
+              {formData.profileImageUri && <img src={formData.profileImageUri} alt="Profile Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" data-ai-hint="profile photo"/>}
             </div>
           </>
         )}
@@ -277,7 +342,7 @@ export function VendorEquipmentForm() {
           <>
             <div className="space-y-2">
               <Label htmlFor="category">Equipment Type</Label>
-              <Select value={formData.category} onValueChange={(value) => updateField('category', value as any)}>
+              <Select value={formData.category} onValueChange={(value) => updateField('category', value as FormDataState['category'])}>
                 <SelectTrigger id="category"><SelectValue placeholder="Select type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Spraying Drone">Spraying Drone</SelectItem>
@@ -292,21 +357,21 @@ export function VendorEquipmentForm() {
             </div>
              <div className="space-y-2">
               <Label htmlFor="brand">Brand</Label>
-              <Input id="brand" placeholder="e.g., DJI, Mahindra" value={formData.brand} onChange={(e) => updateField('brand', e.target.value as any)} />
+              <Input id="brand" placeholder="e.g., DJI, Mahindra" value={formData.brand} onChange={(e) => updateField('brand', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
-              <Input id="model" placeholder="e.g., Agras T30, Arjun 555" value={formData.model} onChange={(e) => updateField('model', e.target.value as any)} />
+              <Input id="model" placeholder="e.g., Agras T30, Arjun 555" value={formData.model} onChange={(e) => updateField('model', e.target.value)} />
             </div>
             {formData.category.toLowerCase().includes('drone') && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="tankSize">Tank Size (Liters, for Drones)</Label>
-                  <Input id="tankSize" placeholder="e.g., 10L, 16L" value={formData.tankSize} onChange={(e) => updateField('tankSize', e.target.value as any)} />
+                  <Input id="tankSize" placeholder="e.g., 10L, 16L" value={formData.tankSize} onChange={(e) => updateField('tankSize', e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="batteriesAvailable">Number of Batteries</Label>
-                  <Input id="batteriesAvailable" type="number" value={formData.batteriesAvailable} onChange={(e) => updateField('batteriesAvailable', Number(e.target.value) as any)} />
+                  <Input id="batteriesAvailable" type="number" value={formData.batteriesAvailable} onChange={(e) => updateField('batteriesAvailable', Number(e.target.value))} />
                 </div>
               </>
             )}
@@ -317,7 +382,7 @@ export function VendorEquipmentForm() {
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="featureTankCleaner">Tank Cleaner (Drones)</Label>
-                     <Select value={formData.feature.tankCleaner} onValueChange={(value) => updateNested('feature', 'tankCleaner', value as string)}>
+                     <Select value={formData.feature.tankCleaner} onValueChange={(value) => updateNested('feature', 'tankCleaner', value as FormDataState['feature']['tankCleaner'])}>
                         <SelectTrigger id="featureTankCleaner"><SelectValue placeholder="Has tank cleaner?" /></SelectTrigger>
                         <SelectContent>
                         <SelectItem value="Yes">Yes</SelectItem>
@@ -335,7 +400,7 @@ export function VendorEquipmentForm() {
               {formData.equipmentImages.length > 0 && (
                 <div className="mt-2 flex gap-2 flex-wrap">
                   {formData.equipmentImages.map((src, index) => (
-                    <img key={index} src={src} alt={`Equipment Preview ${index + 1}`} className="h-24 w-24 object-cover rounded-md border" />
+                    <img key={index} src={src} alt={`Equipment Preview ${index + 1}`} className="h-24 w-24 object-cover rounded-md border" data-ai-hint="equipment photo"/>
                   ))}
                 </div>
               )}
@@ -347,16 +412,16 @@ export function VendorEquipmentForm() {
           <>
             <div className="space-y-2">
               <Label htmlFor="acresCapacityPerDay">Acres Capacity Per Day</Label>
-              <Input id="acresCapacityPerDay" type="number" placeholder="e.g., 30" value={formData.acresCapacityPerDay} onChange={(e) => updateField('acresCapacityPerDay', Number(e.target.value) as any)} />
+              <Input id="acresCapacityPerDay" type="number" placeholder="e.g., 30" value={formData.acresCapacityPerDay} onChange={(e) => updateField('acresCapacityPerDay', Number(e.target.value))} />
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="pricePerAcre">Price Per Unit (₹)</Label>
-                    <Input id="pricePerAcre" type="number" placeholder="e.g., 500" value={formData.pricePerAcre} onChange={(e) => updateField('pricePerAcre', Number(e.target.value) as any)} />
+                    <Input id="pricePerAcre" type="number" placeholder="e.g., 500" value={formData.pricePerAcre} onChange={(e) => updateField('pricePerAcre', Number(e.target.value))} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="unit">Price Unit</Label>
-                    <Select value={formData.unit} onValueChange={(value) => updateField('unit', value as any)}>
+                    <Select value={formData.unit} onValueChange={(value) => updateField('unit', value as FormDataState['unit'])}>
                         <SelectTrigger id="unit"><SelectValue /></SelectTrigger>
                         <SelectContent>
                         <SelectItem value="Per Acre">Per Acre</SelectItem>
@@ -376,11 +441,11 @@ export function VendorEquipmentForm() {
                       id={`day-${day}`} 
                       checked={formData.availableDays.includes(day)}
                       onCheckedChange={(checked) => {
-                        const isChecked = !!checked; // Ensure boolean
+                        const isChecked = !!checked; 
                         updateField('availableDays', 
                           isChecked 
                             ? [...formData.availableDays, day] 
-                            : formData.availableDays.filter(d => d !== day) as any
+                            : formData.availableDays.filter(d => d !== day)
                         );
                       }}
                     />
@@ -411,7 +476,7 @@ export function VendorEquipmentForm() {
 
             <div className="space-y-2">
               <Label htmlFor="travelMode">Primary Travel Mode to Farm</Label>
-              <Select value={formData.travelMode} onValueChange={(value) => updateField('travelMode', value as any)}>
+              <Select value={formData.travelMode} onValueChange={(value) => updateField('travelMode', value as FormDataState['travelMode'])}>
                 <SelectTrigger id="travelMode"><SelectValue placeholder="Select travel mode" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Own Vehicle">Own Vehicle (Bike/Car)</SelectItem>
@@ -424,7 +489,7 @@ export function VendorEquipmentForm() {
 
             <div className="space-y-2">
               <Label htmlFor="servicesExpected">Support Expected from Tatya Mitra</Label>
-              <Select value={formData.servicesExpected} onValueChange={(value) => updateField('servicesExpected', value as any)}>
+              <Select value={formData.servicesExpected} onValueChange={(value) => updateField('servicesExpected', value as FormDataState['servicesExpected'])}>
                 <SelectTrigger id="servicesExpected"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Marketing Support">Marketing Support</SelectItem>
@@ -438,7 +503,7 @@ export function VendorEquipmentForm() {
 
             <div className="space-y-2">
               <Label htmlFor="serviceableRadius">Serviceable Radius (in KM)</Label>
-              <Input id="serviceableRadius" type="number" placeholder="e.g., 25" value={formData.serviceableRadius} onChange={(e) => updateField('serviceableRadius', Number(e.target.value) as any)} />
+              <Input id="serviceableRadius" type="number" placeholder="e.g., 25" value={formData.serviceableRadius} onChange={(e) => updateField('serviceableRadius', Number(e.target.value))} />
             </div>
           </>
         )}
@@ -465,16 +530,18 @@ export function VendorEquipmentForm() {
           <DialogDescription className="my-4 text-base">
             You're all set! Let’s earn lakhs by renting technology and empowering farmers' lives. 🚀
           </DialogDescription>
-          <Button onClick={() => {
-              setShowSuccess(false);
-            }}
-            className="w-full bg-primary hover:bg-primary/90"
-          >
-            View Dashboard (Example)
-          </Button>
+          <DialogFooter className="sm:justify-center">
+            <Button 
+              onClick={handleDialogLoginClick}
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+            >
+              Log In
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
   );
 }
+
 
